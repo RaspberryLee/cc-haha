@@ -9,6 +9,8 @@ const SIBLING_DATA_DIR_NAME = 'cc-haha-data'
 
 export type AppModeAppLike = {
   getPath(name: 'exe' | 'home' | 'userData'): string
+  isPackaged?: boolean
+  getAppPath?(): string
 }
 
 type PersistedAppModeConfig = {
@@ -95,6 +97,12 @@ function externallyControlled(env: NodeJS.ProcessEnv): boolean {
 }
 
 function installRootDir(app: AppModeAppLike): string {
+  // In development the exe is the stock Electron binary inside node_modules,
+  // so anchor the install unit on the repository root (parent of the desktop
+  // app path) to keep the sibling rule consistent with packaged installs.
+  if (app.isPackaged === false && app.getAppPath) {
+    return path.dirname(path.resolve(app.getAppPath()))
+  }
   const exePath = path.resolve(app.getPath('exe'))
   // On macOS the install unit is the .app bundle, not the MacOS dir inside it.
   let current = path.dirname(exePath)

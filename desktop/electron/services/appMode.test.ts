@@ -160,6 +160,28 @@ describe('Electron app mode service', () => {
     expect(detectSiblingPortableDir(fakeApp, {})).toBe(siblingDir)
   })
 
+  it('anchors sibling detection on the repository root in development mode', () => {
+    const root = tempDir()
+    const appPath = path.join(root, 'repo', 'desktop')
+    const exe = path.join(appPath, 'node_modules', 'electron', 'dist', 'electron.exe')
+    fs.mkdirSync(path.dirname(exe), { recursive: true })
+    fs.writeFileSync(exe, '')
+    const fakeApp: AppModeAppLike = {
+      isPackaged: false,
+      getAppPath: () => appPath,
+      getPath(name) {
+        if (name === 'exe') return exe
+        if (name === 'home') return path.join(root, 'home')
+        return path.join(root, 'user-data')
+      },
+    }
+    // The install unit is the repository root, so the data folder sits beside it.
+    const siblingDir = path.join(root, 'cc-haha-data')
+    fs.mkdirSync(siblingDir, { recursive: true })
+
+    expect(detectSiblingPortableDir(fakeApp, {})).toBe(siblingDir)
+  })
+
   it('keeps explicit choices ahead of sibling detection', () => {
     const fakeApp = app()
     const siblingDir = path.join(fakeApp.root, 'cc-haha-data')
