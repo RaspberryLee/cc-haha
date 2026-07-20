@@ -591,7 +591,7 @@ export function EmptySession() {
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden bg-[var(--color-surface)]">
       <div className={`flex flex-1 flex-col items-center justify-center ${
-        isMobileComposer ? 'px-6 pb-[230px] pt-10' : 'p-8 pb-32'
+        isMobileComposer ? 'px-6 pb-[230px] pt-10' : 'p-8'
       }`}>
         <div className={`flex flex-col items-center text-center ${
           isMobileComposer ? 'max-w-[300px]' : 'max-w-md'
@@ -599,7 +599,7 @@ export function EmptySession() {
           <img
             src={publicAssetPath('app-icon.png')}
             alt="Claude Code Haha"
-            className={isMobileComposer ? 'mb-4 h-16 w-16' : 'mb-6 h-24 w-24'}
+            className={isMobileComposer ? 'mb-4 h-16 w-16' : 'mb-5 h-16 w-16'}
           />
           <h1
             className={`mb-2 font-extrabold tracking-tight text-[var(--color-text-primary)] ${
@@ -611,21 +611,22 @@ export function EmptySession() {
           </h1>
           <p
             className={`mx-auto text-[var(--color-text-secondary)] ${
-              isMobileComposer ? 'max-w-[280px] text-sm leading-6' : 'max-w-xs'
+              isMobileComposer ? 'max-w-[280px] text-sm leading-6' : 'max-w-sm'
             }`}
             style={{ fontFamily: 'var(--font-body)' }}
           >
             {t('empty.subtitle')}
           </p>
         </div>
-      </div>
 
+      {/* Desktop keeps the composer centered under the greeting, ChatGPT style;
+          mobile keeps it docked to the bottom where thumbs can reach it. */}
       <div
         data-testid="empty-session-composer-shell"
-        className={`absolute left-0 right-0 z-30 flex justify-center ${
+        className={`z-30 flex justify-center ${
         isMobileComposer
-          ? 'bottom-0 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]'
-          : 'bottom-4 px-8'
+          ? 'absolute left-0 right-0 bottom-0 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]'
+          : 'mt-8 w-full px-8'
       }`}
       >
         <div className={`flex w-full flex-col ${isMobileComposer ? 'max-w-none' : 'max-w-3xl'}`}>
@@ -856,6 +857,7 @@ export function EmptySession() {
             />
           )}
         </div>
+      </div>
       </div>
 
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} />

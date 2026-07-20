@@ -1267,8 +1267,8 @@ export const en = {
   'settings.general.uiZoomReset': 'Reset UI zoom to 100%',
 
   // ─── Empty Session ──────────────────────────────────────
-  'empty.title': 'New session',
-  'empty.subtitle': 'Start a fresh coding session. Claude is ready to help you build, debug, and architect your project.',
+  'empty.title': 'What are we building today?',
+  'empty.subtitle': 'Ask anything — build, debug, or explore.',
   'empty.placeholder': 'Ask anything...',
   'empty.addFiles': 'Add files or photos',
   'empty.slashCommands': 'Slash commands',
