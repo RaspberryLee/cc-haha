@@ -5,6 +5,7 @@ import process from 'node:process'
 import type { AppModeConfig, AppModeSetInput } from '../../src/lib/desktopHost/types'
 
 const APP_MODE_FILE = 'app-mode.json'
+const SIBLING_DATA_DIR_NAME = 'cc-haha-data'
 
 export type AppModeAppLike = {
   getPath(name: 'exe' | 'home' | 'userData'): string
@@ -93,6 +94,38 @@ function externallyControlled(env: NodeJS.ProcessEnv): boolean {
   return Boolean(env.CLAUDE_CONFIG_DIR && env.CC_HAHA_APP_PORTABLE_DIR !== '1')
 }
 
+function installRootDir(app: AppModeAppLike): string {
+  const exePath = path.resolve(app.getPath('exe'))
+  // On macOS the install unit is the .app bundle, not the MacOS dir inside it.
+  let current = path.dirname(exePath)
+  while (true) {
+    if (current.toLowerCase().endsWith('.app')) return current
+    const parent = path.dirname(current)
+    if (parent === current) return path.dirname(exePath)
+    current = parent
+  }
+}
+
+export function detectSiblingPortableDir(
+  app: AppModeAppLike,
+  env: NodeJS.ProcessEnv = process.env,
+): string | null {
+  // Explicit choices always win: a launch-environment override, or a persisted
+  // app-mode record (either mode) written from the Settings UI.
+  if (env.CLAUDE_CONFIG_DIR) return null
+  if (readAppModeConfig(app.getPath('userData'))) return null
+
+  const candidate = path.join(path.dirname(installRootDir(app)), SIBLING_DATA_DIR_NAME)
+  try {
+    if (!fs.existsSync(candidate) || !fs.statSync(candidate).isDirectory()) return null
+    const normalized = normalizedCustomDir(app, candidate)
+    assertWritableDataDir(normalized)
+    return normalized
+  } catch {
+    return null
+  }
+}
+
 export function determineStartupPortableDir(
   app: AppModeAppLike,
   env: NodeJS.ProcessEnv = process.env,
@@ -124,7 +157,7 @@ export function applyStartupPortableMode(
     env.CLAUDE_CONFIG_DIR = normalizedCustomDir(app, env.CLAUDE_CONFIG_DIR)
     return null
   }
-  const customDir = determineStartupPortableDir(app, env)
+  const customDir = determineStartupPortableDir(app, env) ?? detectSiblingPortableDir(app, env)
   if (!customDir) return null
 
   const webViewDataDir = path.join(customDir, 'EBWebView')
@@ -142,7 +175,9 @@ export function getAppMode(
   const envConfigDir = env.CLAUDE_CONFIG_DIR
     ? normalizedCustomDir(app, env.CLAUDE_CONFIG_DIR)
     : null
-  const persistedCustomDir = envConfigDir ? null : determineStartupPortableDir(app, env)
+  const persistedCustomDir = envConfigDir
+    ? null
+    : determineStartupPortableDir(app, env) ?? detectSiblingPortableDir(app, env)
   const customDir = envConfigDir || persistedCustomDir
   if (customDir) {
     return {
