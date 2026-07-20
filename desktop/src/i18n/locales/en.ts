@@ -2184,6 +2184,8 @@ export const en = {
   'sidebar.market': 'Skills Market',
   'market.title': 'Skills Market',
   'market.subtitle': 'Browse, preview and install skills from ClawHub and SkillHub.',
+  'market.section.installed': 'Installed',
+  'market.section.discover': 'Discover',
   'market.searchPlaceholder': 'Search skills by name, keyword…',
   'market.clearSearch': 'Clear search',
   'market.resultCount': '{count} skills',

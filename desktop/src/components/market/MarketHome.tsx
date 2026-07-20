@@ -34,55 +34,55 @@ export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string
   const hasActiveFilters =
     filters.source !== 'all' || filters.security !== 'all' || filters.installed !== 'all'
   const hasQuery = query.trim().length > 0
+  // Group installed skills into their own section on the default browse view,
+  // the way consumer skill stores separate "Installed" from the catalog.
+  const showInstalledSection = !hasQuery && !hasActiveFilters
+  const installedItems = showInstalledSection
+    ? items.filter((skill) => skill.installState === 'installed')
+    : []
+  const catalogItems = showInstalledSection
+    ? items.filter((skill) => skill.installState !== 'installed')
+    : items
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--color-surface-container-lowest)]">
-      <header className="shrink-0 border-b border-[var(--color-border)]/70 bg-[var(--color-surface)]">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-center justify-between gap-5 px-6 py-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3.5">
-            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-container-low)] text-[var(--color-brand)] shadow-[0_1px_2px_rgba(27,28,26,0.06)]">
-              <Store className="h-5 w-5" strokeWidth={1.9} aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <h1 className="text-[22px] font-semibold leading-7 tracking-[-0.025em] text-[var(--color-text-primary)]">
-                {t('market.title')}
-              </h1>
-              <p className="mt-0.5 max-w-2xl text-[13px] leading-5 text-[var(--color-text-secondary)]">
-                {t('market.subtitle')}
-              </p>
-            </div>
-          </div>
-          <SourceStatusBar sources={sources} />
-        </div>
-      </header>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--color-surface)]">
+      <div className="mx-auto flex w-full max-w-[980px] flex-col gap-5 px-6 pb-8 pt-10 lg:px-8">
+        <header className="flex flex-col items-start gap-1.5">
+          <h1 className="text-3xl font-bold leading-10 tracking-[-0.02em] text-[var(--color-text-primary)]">
+            {t('market.title')}
+          </h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+            {t('market.subtitle')}
+          </p>
+        </header>
 
-      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 px-6 py-5 lg:px-8">
         <MarketDisclaimer />
 
-        <section className="sticky top-0 z-20 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-glass)] p-2.5 shadow-[0_8px_24px_rgba(27,28,26,0.06)] backdrop-blur-xl">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex min-h-10 min-w-[260px] flex-1 items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-container-lowest)] px-3 transition-colors focus-within:border-[var(--color-border-focus)] focus-within:shadow-[var(--shadow-focus-ring)]">
-              <Search className="h-4 w-4 flex-shrink-0 text-[var(--color-text-tertiary)]" strokeWidth={2} aria-hidden="true" />
-              <input
-                data-testid="market-search-input"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder={t('market.searchPlaceholder')}
-                aria-label={t('market.searchPlaceholder')}
-                className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
-              />
-              {query && (
-                <button
-                  type="button"
-                  aria-label={t('market.clearSearch')}
-                  onClick={() => setQuery('')}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus-ring)]"
-                >
-                  <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
-                </button>
-              )}
-            </div>
+        <section className="sticky top-0 z-20 -mx-1 flex flex-col gap-2.5 bg-[var(--color-surface)]/95 px-1 py-1.5 backdrop-blur-xl">
+          <div className="flex min-h-12 items-center gap-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-container-lowest)] px-4 transition-colors focus-within:border-[var(--color-border-focus)] focus-within:shadow-[var(--shadow-focus-ring)]">
+            <Search className="h-4 w-4 flex-shrink-0 text-[var(--color-text-tertiary)]" strokeWidth={2} aria-hidden="true" />
+            <input
+              data-testid="market-search-input"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('market.searchPlaceholder')}
+              aria-label={t('market.searchPlaceholder')}
+              className="min-w-0 flex-1 bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label={t('market.clearSearch')}
+                onClick={() => setQuery('')}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus-ring)]"
+              >
+                <X className="h-3.5 w-3.5" strokeWidth={2} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
             <FilterBar />
+            <SourceStatusBar sources={sources} />
           </div>
         </section>
 
@@ -137,16 +137,43 @@ export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string
 
         {!isLoading && items.length > 0 && (
           <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3" data-testid="market-grid">
-              {items.map((skill) => (
-                <SkillCard
-                  key={skill.id}
-                  skill={skill}
-                  onOpen={(id) => void useMarketStore.getState().openDetail(id)}
-                  onInstall={onRequestInstall}
-                  installing={installingIds.has(skill.id)}
-                />
-              ))}
+            <div className="flex flex-col gap-7" data-testid="market-grid">
+              {installedItems.length > 0 && (
+                <section data-testid="market-installed-section">
+                  <h2 className="mb-3 border-b border-[var(--color-border)]/60 pb-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {t('market.section.installed')}
+                  </h2>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {installedItems.map((skill) => (
+                      <SkillCard
+                        key={skill.id}
+                        skill={skill}
+                        onOpen={(id) => void useMarketStore.getState().openDetail(id)}
+                        onInstall={onRequestInstall}
+                        installing={installingIds.has(skill.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+              <section>
+                {installedItems.length > 0 && (
+                  <h2 className="mb-3 border-b border-[var(--color-border)]/60 pb-2 text-base font-semibold text-[var(--color-text-primary)]">
+                    {t('market.section.discover')}
+                  </h2>
+                )}
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {catalogItems.map((skill) => (
+                    <SkillCard
+                      key={skill.id}
+                      skill={skill}
+                      onOpen={(id) => void useMarketStore.getState().openDetail(id)}
+                      onInstall={onRequestInstall}
+                      installing={installingIds.has(skill.id)}
+                    />
+                  ))}
+                </div>
+              </section>
             </div>
 
             {nextCursor && (
@@ -174,7 +201,7 @@ export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string
 
 function MarketGridSkeleton({ label }: { label: string }) {
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3" data-testid="market-loading" aria-label={label}>
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2" data-testid="market-loading" aria-label={label}>
       {Array.from({ length: 6 }, (_, index) => (
         <div
           key={index}

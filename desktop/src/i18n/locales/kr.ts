@@ -2186,6 +2186,8 @@ export const kr: Record<TranslationKey, string> = {
   'sidebar.market': '스킬 마켓',
   'market.title': '스킬 마켓',
   'market.subtitle': 'ClawHub와 SkillHub의 스킬을 탐색·미리보기·설치할 수 있습니다.',
+  'market.section.installed': '설치됨',
+  'market.section.discover': '둘러보기',
   'market.searchPlaceholder': '스킬 이름, 키워드로 검색…',
   'market.clearSearch': '검색 지우기',
   'market.resultCount': '{count}개의 스킬',

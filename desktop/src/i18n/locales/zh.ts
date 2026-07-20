@@ -2186,6 +2186,8 @@ export const zh: Record<TranslationKey, string> = {
   'sidebar.market': '技能市场',
   'market.title': '技能市场',
   'market.subtitle': '浏览、预览并安装来自 ClawHub 与 SkillHub 的技能。',
+  'market.section.installed': '已安装',
+  'market.section.discover': '发现',
   'market.searchPlaceholder': '按名称、关键词搜索技能…',
   'market.clearSearch': '清除搜索',
   'market.resultCount': '{count} 个技能',

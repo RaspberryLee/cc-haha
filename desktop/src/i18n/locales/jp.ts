@@ -2186,6 +2186,8 @@ export const jp: Record<TranslationKey, string> = {
   'sidebar.market': 'スキルマーケット',
   'market.title': 'スキルマーケット',
   'market.subtitle': 'ClawHub と SkillHub のスキルを閲覧・プレビュー・インストールできます。',
+  'market.section.installed': 'インストール済み',
+  'market.section.discover': '見つける',
   'market.searchPlaceholder': 'スキル名・キーワードで検索…',
   'market.clearSearch': '検索をクリア',
   'market.resultCount': '{count} 件のスキル',
