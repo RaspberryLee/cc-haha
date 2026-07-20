@@ -4,6 +4,7 @@ import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   applyStartupPortableMode,
+  detectSiblingPortableDir,
   determineStartupPortableDir,
   getAppMode,
   setAppMode,
@@ -118,6 +119,76 @@ describe('Electron app mode service', () => {
     expect(() => applyStartupPortableMode(fakeApp, {
       CLAUDE_CONFIG_DIR: installData,
     })).toThrow('outside the application install directory')
+  })
+
+  it('adopts a writable cc-haha-data folder next to the install directory when no explicit choice exists', () => {
+    const fakeApp = app()
+    const siblingDir = path.join(fakeApp.root, 'cc-haha-data')
+    fs.mkdirSync(siblingDir, { recursive: true })
+    const env: NodeJS.ProcessEnv = {}
+
+    expect(detectSiblingPortableDir(fakeApp, env)).toBe(siblingDir)
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(siblingDir)
+    expect(env).toMatchObject({
+      CLAUDE_CONFIG_DIR: siblingDir,
+      CC_HAHA_APP_PORTABLE_DIR: '1',
+      WEBVIEW2_USER_DATA_FOLDER: path.join(siblingDir, 'EBWebView'),
+    })
+    expect(getAppMode(fakeApp, env)).toEqual({
+      mode: 'portable',
+      portableDir: siblingDir,
+      activeConfigDir: siblingDir,
+      configDirSource: 'portable',
+    })
+  })
+
+  it('resolves the sibling data folder relative to the .app bundle on macOS layouts', () => {
+    const root = tempDir()
+    const exe = path.join(root, 'Applications', 'Claude Code Haha.app', 'Contents', 'MacOS', 'Claude Code Haha')
+    fs.mkdirSync(path.dirname(exe), { recursive: true })
+    fs.writeFileSync(exe, '')
+    const fakeApp: AppModeAppLike = {
+      getPath(name) {
+        if (name === 'exe') return exe
+        if (name === 'home') return path.join(root, 'home')
+        return path.join(root, 'user-data')
+      },
+    }
+    const siblingDir = path.join(root, 'Applications', 'cc-haha-data')
+    fs.mkdirSync(siblingDir, { recursive: true })
+
+    expect(detectSiblingPortableDir(fakeApp, {})).toBe(siblingDir)
+  })
+
+  it('keeps explicit choices ahead of sibling detection', () => {
+    const fakeApp = app()
+    const siblingDir = path.join(fakeApp.root, 'cc-haha-data')
+    fs.mkdirSync(siblingDir, { recursive: true })
+
+    // A launch-environment override wins.
+    expect(detectSiblingPortableDir(fakeApp, {
+      CLAUDE_CONFIG_DIR: path.join(fakeApp.root, 'external-data'),
+    })).toBeNull()
+
+    // Any persisted app-mode record (including explicit default) wins.
+    writeMode(fakeApp, { mode: 'default', portable_dir: null })
+    expect(detectSiblingPortableDir(fakeApp, {})).toBeNull()
+    expect(applyStartupPortableMode(fakeApp, {})).toBeNull()
+
+    const customDir = path.join(fakeApp.root, 'custom-data')
+    writeMode(fakeApp, { mode: 'portable', portable_dir: customDir })
+    const env: NodeJS.ProcessEnv = {}
+    expect(applyStartupPortableMode(fakeApp, env)).toBe(customDir)
+    expect(env.CLAUDE_CONFIG_DIR).toBe(customDir)
+  })
+
+  it('ignores a sibling cc-haha-data path that is not a directory', () => {
+    const fakeApp = app()
+    fs.writeFileSync(path.join(fakeApp.root, 'cc-haha-data'), '')
+
+    expect(detectSiblingPortableDir(fakeApp, {})).toBeNull()
+    expect(applyStartupPortableMode(fakeApp, {})).toBeNull()
+    expect(getAppMode(fakeApp, {})).toMatchObject({ mode: 'default', configDirSource: 'system' })
   })
 
   it('drops inherited app-managed env so switching back to ~/.claude survives relaunch', () => {
