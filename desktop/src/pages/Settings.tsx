@@ -21,6 +21,7 @@ import { Copy, Eye, EyeOff, GripVertical, PowerOff, QrCode, RotateCw } from 'luc
 import { useSettingsStore, UI_ZOOM_DEFAULT, UI_ZOOM_MIN, UI_ZOOM_MAX, UI_ZOOM_STEP } from '../stores/settingsStore'
 import { useProviderStore } from '../stores/providerStore'
 import { useTranslation, type TranslationKey } from '../i18n'
+import { isDeveloperOnlySettingsTab, readSettingsDeveloperMode, writeSettingsDeveloperMode } from '../lib/settingsMode'
 import { Modal } from '../components/shared/Modal'
 import { ConfirmDialog } from '../components/shared/ConfirmDialog'
 import { Input } from '../components/shared/Input'
@@ -203,6 +204,7 @@ export function Settings() {
   const setActiveTab = useUIStore((s) => s.setActiveSettingsTab)
   const pendingSettingsTab = useUIStore((s) => s.pendingSettingsTab)
   const t = useTranslation()
+  const [developerMode, setDeveloperMode] = useState(readSettingsDeveloperMode)
 
   useEffect(() => {
     if (!pendingSettingsTab) return
@@ -210,28 +212,62 @@ export function Settings() {
     useUIStore.getState().setPendingSettingsTab(null)
   }, [pendingSettingsTab, setActiveTab])
 
+  // Leaving developer mode while a developer tab is open falls back to General.
+  useEffect(() => {
+    if (!developerMode && isDeveloperOnlySettingsTab(activeTab)) setActiveTab('general')
+  }, [developerMode, activeTab, setActiveTab])
+
+  const toggleDeveloperMode = () => {
+    const next = !developerMode
+    setDeveloperMode(next)
+    writeSettingsDeveloperMode(next)
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-surface)]">
       <div className="flex-1 flex overflow-hidden">
         {/* Tab navigation */}
-        <div className="w-[180px] border-r border-[var(--color-border)] py-3 flex-shrink-0 flex flex-col">
+        <div className="w-[210px] border-r border-[var(--color-border)] py-3 px-2 flex-shrink-0 flex flex-col overflow-y-auto">
           <div className="flex-1">
-            <TabButton icon="dns" label={t('settings.tab.providers')} active={activeTab === 'providers'} onClick={() => setActiveTab('providers')} />
+            <NavGroupLabel label={t('settings.group.personal')} />
             <TabButton icon="tune" label={t('settings.tab.general')} active={activeTab === 'general'} onClick={() => setActiveTab('general')} />
-            <TabButton icon="qr_code_2" label={t('settings.tab.h5Access')} active={activeTab === 'h5Access'} onClick={() => setActiveTab('h5Access')} />
-            <TabButton icon="chat" label={t('settings.tab.adapters')} active={activeTab === 'adapters'} onClick={() => setActiveTab('adapters')} />
-            <TabButton icon="terminal" label={t('settings.tab.terminal')} active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} />
-            <TabButton icon="dns" label={t('settings.tab.mcp')} active={activeTab === 'mcp'} onClick={() => setActiveTab('mcp')} />
-            <TabButton icon="smart_toy" label={t('settings.tab.agents')} active={activeTab === 'agents'} onClick={() => setActiveTab('agents')} />
-            <TabButton icon="auto_awesome" label={t('settings.tab.skills')} active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
-            <TabButton icon="history_edu" label={t('settings.tab.memory')} active={activeTab === 'memory'} onClick={() => setActiveTab('memory')} />
-            <TabButton icon="extension" label={t('settings.tab.plugins')} active={activeTab === 'plugins'} onClick={() => setActiveTab('plugins')} />
+            <TabButton icon="dns" label={t('settings.tab.providers')} active={activeTab === 'providers'} onClick={() => setActiveTab('providers')} />
+
+            <NavGroupLabel label={t('settings.group.integrations')} />
             <TabButton icon="mouse" label={t('settings.tab.computerUse')} active={activeTab === 'computerUse'} onClick={() => setActiveTab('computerUse')} />
-            <TabButton icon="monitoring" label={t('settings.tab.activity')} active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
-            <TabButton icon="account_tree" label={t('settings.tab.trace')} active={activeTab === 'trace'} onClick={() => setActiveTab('trace')} />
-            <TabButton icon="monitor_heart" label={t('settings.tab.diagnostics')} active={activeTab === 'diagnostics'} onClick={() => setActiveTab('diagnostics')} />
+            <TabButton icon="qr_code_2" label={t('settings.tab.h5Access')} active={activeTab === 'h5Access'} onClick={() => setActiveTab('h5Access')} />
+
+            {developerMode && (
+              <>
+                <NavGroupLabel label={t('settings.group.developer')} />
+                <TabButton icon="chat" label={t('settings.tab.adapters')} active={activeTab === 'adapters'} onClick={() => setActiveTab('adapters')} />
+                <TabButton icon="terminal" label={t('settings.tab.terminal')} active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} />
+                <TabButton icon="dns" label={t('settings.tab.mcp')} active={activeTab === 'mcp'} onClick={() => setActiveTab('mcp')} />
+                <TabButton icon="smart_toy" label={t('settings.tab.agents')} active={activeTab === 'agents'} onClick={() => setActiveTab('agents')} />
+                <TabButton icon="auto_awesome" label={t('settings.tab.skills')} active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
+                <TabButton icon="history_edu" label={t('settings.tab.memory')} active={activeTab === 'memory'} onClick={() => setActiveTab('memory')} />
+                <TabButton icon="extension" label={t('settings.tab.plugins')} active={activeTab === 'plugins'} onClick={() => setActiveTab('plugins')} />
+                <TabButton icon="monitoring" label={t('settings.tab.activity')} active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
+                <TabButton icon="account_tree" label={t('settings.tab.trace')} active={activeTab === 'trace'} onClick={() => setActiveTab('trace')} />
+                <TabButton icon="monitor_heart" label={t('settings.tab.diagnostics')} active={activeTab === 'diagnostics'} onClick={() => setActiveTab('diagnostics')} />
+              </>
+            )}
           </div>
-          <div className="border-t border-[var(--color-border)]/40 pt-1">
+          <div className="border-t border-[var(--color-border)]/40 pt-2 mt-2">
+            <label className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--color-text-secondary)] cursor-pointer hover:bg-[var(--color-surface-hover)]">
+              <span className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">code</span>
+                {t('settings.developerMode')}
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                aria-label={t('settings.developerMode')}
+                checked={developerMode}
+                onChange={toggleDeveloperMode}
+                className="accent-[var(--color-primary)]"
+              />
+            </label>
             <TabButton icon="info" label={t('settings.tab.about')} active={activeTab === 'about'} onClick={() => setActiveTab('about')} />
           </div>
         </div>
@@ -259,12 +295,20 @@ export function Settings() {
   )
 }
 
+function NavGroupLabel({ label }: { label: string }) {
+  return (
+    <div className="px-3 pt-4 pb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-tertiary,var(--color-text-secondary))] select-none first:pt-1">
+      {label}
+    </div>
+  )
+}
+
 function TabButton({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-left transition-colors ${
+      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left rounded-lg transition-colors ${
         active
           ? 'bg-[var(--color-surface-selected)] text-[var(--color-text-primary)] font-medium'
           : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'

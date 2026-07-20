@@ -2369,4 +2369,41 @@ describe('Settings > About tab', () => {
       url: 'http://127.0.0.1:7890',
     })
   })
+
+  it('hides developer tabs behind the developer-mode switch by default', () => {
+    const testWindow = window as Window & { __ccHahaForceSimpleSettings?: boolean }
+    testWindow.__ccHahaForceSimpleSettings = true
+    try {
+      render(<Settings />)
+
+      // Plain-language groups stay visible; engineering tabs do not.
+      expect(screen.getByText('Personal')).toBeInTheDocument()
+      expect(screen.getByText('Integrations')).toBeInTheDocument()
+      expect(screen.queryByText('MCP')).not.toBeInTheDocument()
+      expect(screen.queryByText('Trace')).not.toBeInTheDocument()
+
+      // Flipping the switch reveals the developer group.
+      fireEvent.click(screen.getByRole('switch', { name: 'Developer mode' }))
+      expect(screen.getByText('Developer')).toBeInTheDocument()
+      expect(screen.getByText('MCP')).toBeInTheDocument()
+    } finally {
+      delete testWindow.__ccHahaForceSimpleSettings
+      window.localStorage?.removeItem('cc-haha-settings-developer-mode')
+    }
+  })
+
+  it('falls back to General when a developer tab is open outside developer mode', () => {
+    const testWindow = window as Window & { __ccHahaForceSimpleSettings?: boolean }
+    testWindow.__ccHahaForceSimpleSettings = true
+    try {
+      act(() => {
+        useUIStore.getState().setActiveSettingsTab('mcp')
+      })
+      render(<Settings />)
+
+      expect(useUIStore.getState().activeSettingsTab).toBe('general')
+    } finally {
+      delete testWindow.__ccHahaForceSimpleSettings
+    }
+  })
 })
