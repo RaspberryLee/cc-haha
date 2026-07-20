@@ -236,6 +236,7 @@ export const kr: Record<TranslationKey, string> = {
   'settings.tab.activity': '토큰 사용량',
   'settings.tab.trace': 'Trace',
   'settings.group.personal': '개인',
+  'settings.group.extensions': '확장 기능',
   'settings.group.integrations': '통합',
   'settings.group.developer': '개발자',
   'settings.developerMode': '개발자 모드',

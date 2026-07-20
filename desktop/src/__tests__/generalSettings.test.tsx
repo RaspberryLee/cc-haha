@@ -2378,7 +2378,11 @@ describe('Settings > About tab', () => {
 
       // Plain-language groups stay visible; engineering tabs do not.
       expect(screen.getByText('Personal')).toBeInTheDocument()
+      expect(screen.getByText('Extensions')).toBeInTheDocument()
       expect(screen.getByText('Integrations')).toBeInTheDocument()
+      // Consumer extensions stay reachable without developer mode.
+      expect(screen.getByText('Skills')).toBeInTheDocument()
+      expect(screen.getByText('Plugins')).toBeInTheDocument()
       expect(screen.queryByText('MCP')).not.toBeInTheDocument()
       expect(screen.queryByText('Trace')).not.toBeInTheDocument()
 

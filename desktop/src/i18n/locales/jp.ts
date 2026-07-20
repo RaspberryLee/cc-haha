@@ -236,6 +236,7 @@ export const jp: Record<TranslationKey, string> = {
   'settings.tab.activity': 'トークン使用量',
   'settings.tab.trace': 'Trace',
   'settings.group.personal': '個人',
+  'settings.group.extensions': '拡張機能',
   'settings.group.integrations': '連携',
   'settings.group.developer': '開発者',
   'settings.developerMode': '開発者モード',

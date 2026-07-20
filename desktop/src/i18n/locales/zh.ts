@@ -236,6 +236,7 @@ export const zh: Record<TranslationKey, string> = {
   'settings.tab.activity': 'Token 用量',
   'settings.tab.trace': 'Trace',
   'settings.group.personal': '个人',
+  'settings.group.extensions': '扩展',
   'settings.group.integrations': '集成',
   'settings.group.developer': '开发者',
   'settings.developerMode': '开发者模式',

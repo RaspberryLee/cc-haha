@@ -234,6 +234,7 @@ export const en = {
   'settings.tab.activity': 'Token usage',
   'settings.tab.trace': 'Trace',
   'settings.group.personal': 'Personal',
+  'settings.group.extensions': 'Extensions',
   'settings.group.integrations': 'Integrations',
   'settings.group.developer': 'Developer',
   'settings.developerMode': 'Developer mode',
