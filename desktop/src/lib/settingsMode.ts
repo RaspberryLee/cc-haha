@@ -7,14 +7,13 @@ export const SETTINGS_DEVELOPER_MODE_STORAGE_KEY = 'cc-haha-settings-developer-m
  * wiring). Hidden by default so everyday users only see plain-language
  * settings; the developer-mode switch at the bottom of the nav reveals them.
  * Skills, agents and plugins stay visible to everyone — they are consumer
- * extensions (the Market feeds them), not engineering internals.
+ * extensions (the Market feeds them), not engineering internals. Memory and
+ * token usage are personal data every user owns, so they stay visible too.
  */
 const DEVELOPER_ONLY_SETTINGS_TABS = new Set<SettingsTab>([
   'adapters',
   'terminal',
   'mcp',
-  'memory',
-  'activity',
   'trace',
   'diagnostics',
 ])
