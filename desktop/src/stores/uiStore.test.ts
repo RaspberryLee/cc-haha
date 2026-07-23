@@ -72,3 +72,31 @@ describe('uiStore settings tab persistence', () => {
     expect(useUIStore.getState().activeSettingsTab).toBe('providers')
   })
 })
+
+describe('uiStore capability section persistence', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    window.localStorage.clear()
+  })
+
+  it('restores the last selected capability section', async () => {
+    const first = await import('./uiStore')
+
+    first.useUIStore.getState().setActiveCapabilitySection('agents')
+
+    expect(window.localStorage.getItem('cc-haha-active-capability-section')).toBe('agents')
+
+    vi.resetModules()
+    const recreated = await import('./uiStore')
+
+    expect(recreated.useUIStore.getState().activeCapabilitySection).toBe('agents')
+  })
+
+  it('falls back to Skills for an invalid persisted capability section', async () => {
+    window.localStorage.setItem('cc-haha-active-capability-section', 'not-a-section')
+
+    const { useUIStore } = await import('./uiStore')
+
+    expect(useUIStore.getState().activeCapabilitySection).toBe('skills')
+  })
+})

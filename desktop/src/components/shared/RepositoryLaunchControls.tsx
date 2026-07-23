@@ -29,7 +29,7 @@ type Props = {
   onUseWorktreeChange: (enabled: boolean) => void
   onLaunchReadyChange?: (ready: boolean) => void
   disabled?: boolean
-  placement?: 'standalone' | 'composer'
+  placement?: 'standalone' | 'composer' | 'composerTop'
 }
 
 const BRANCH_MENU_HEIGHT = 360
@@ -60,7 +60,8 @@ export function RepositoryLaunchControls({
 }: Props) {
   const t = useTranslation()
   const isMobileBrowser = useMobileViewport() && !isDesktopRuntime()
-  const isComposerPlacement = placement === 'composer' && !isMobileBrowser
+  const isComposerPlacement = (placement === 'composer' || placement === 'composerTop') && !isMobileBrowser
+  const isComposerTop = placement === 'composerTop' && !isMobileBrowser
   const [context, setContext] = useState<RepositoryContextResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -335,11 +336,11 @@ export function RepositoryLaunchControls({
 
   return (
     <div ref={rootRef} className={`flex min-w-0 flex-col ${isMobileBrowser ? 'gap-0' : isComposerPlacement ? 'gap-1' : 'gap-2'}`}>
-      <div className={`flex min-w-0 items-center justify-start gap-x-1.5 gap-y-1 overflow-hidden border-t border-[var(--color-border-separator)] ${
+      <div className={`flex min-w-0 items-center justify-start gap-x-1.5 gap-y-1 overflow-hidden ${isComposerTop ? 'border-b' : 'border-t'} border-[var(--color-border-separator)] ${
         isMobileBrowser
           ? 'min-h-[52px] flex-wrap rounded-none bg-[var(--color-surface-container-lowest)] px-3 py-2 shadow-none'
           : isComposerPlacement
-            ? 'min-h-[44px] flex-nowrap bg-transparent px-4 py-2'
+            ? `min-h-[44px] flex-nowrap bg-transparent px-4 py-2 ${isComposerTop ? 'rounded-t-[22px]' : ''}`
           : 'min-h-[48px] flex-nowrap rounded-b-xl bg-[var(--color-surface-container-low)] px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]'
       }`}>
         <DirectoryPicker value={workDir} onChange={onWorkDirChange} variant="workbar" isGitProject={isGitReady} />

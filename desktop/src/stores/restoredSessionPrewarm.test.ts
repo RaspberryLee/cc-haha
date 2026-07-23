@@ -55,7 +55,7 @@ describe('restored session prewarm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useSessionStore.setState({ sessions: [], activeSessionId: null })
     useSessionRuntimeStore.setState({ selections: {} })
     useChatStore.setState({ ...initialChatState, sessions: {} })

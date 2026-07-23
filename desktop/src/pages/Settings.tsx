@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Copy, Eye, EyeOff, GripVertical, PowerOff, QrCode, RotateCw } from 'lucide-react'
+import { ArrowLeft, Copy, Eye, EyeOff, GripVertical, PowerOff, QrCode, RotateCw, Search } from 'lucide-react'
 import { useSettingsStore, UI_ZOOM_DEFAULT, UI_ZOOM_MIN, UI_ZOOM_MAX, UI_ZOOM_STEP } from '../stores/settingsStore'
 import { useProviderStore } from '../stores/providerStore'
 import { useTranslation, type TranslationKey } from '../i18n'
@@ -51,6 +51,7 @@ import { TraceList } from './TraceList'
 import { ActivitySettings } from './ActivitySettings'
 import { MemorySettings } from './MemorySettings'
 import { useUIStore } from '../stores/uiStore'
+import { SETTINGS_TAB_ID, useTabStore } from '../stores/tabStore'
 import { ClaudeOfficialLogin } from '../components/settings/ClaudeOfficialLogin'
 import { ChatGPTOfficialLogin } from '../components/settings/ChatGPTOfficialLogin'
 import { GrokOfficialLogin } from '../components/settings/GrokOfficialLogin'
@@ -198,13 +199,13 @@ function buildH5PublicBaseUrlFromHostDraft(draft: string, currentBaseUrl: string
     return trimmed
   }
 }
-
 export function Settings() {
   const activeTab = useUIStore((s) => s.activeSettingsTab)
   const setActiveTab = useUIStore((s) => s.setActiveSettingsTab)
   const pendingSettingsTab = useUIStore((s) => s.pendingSettingsTab)
   const t = useTranslation()
   const [developerMode, setDeveloperMode] = useState(readSettingsDeveloperMode)
+  const [settingsSearch, setSettingsSearch] = useState('')
 
   useEffect(() => {
     if (!pendingSettingsTab) return
@@ -212,7 +213,6 @@ export function Settings() {
     useUIStore.getState().setPendingSettingsTab(null)
   }, [pendingSettingsTab, setActiveTab])
 
-  // Leaving developer mode while a developer tab is open falls back to General.
   useEffect(() => {
     if (!developerMode && isDeveloperOnlySettingsTab(activeTab)) setActiveTab('general')
   }, [developerMode, activeTab, setActiveTab])
@@ -223,76 +223,115 @@ export function Settings() {
     writeSettingsDeveloperMode(next)
   }
 
+  const searchQuery = settingsSearch.trim().toLocaleLowerCase()
+  const activeTabTitle = t(`settings.tab.${activeTab}` as TranslationKey)
+  const tabButtonProps = { searchQuery }
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[var(--color-surface)]">
-      <div className="flex-1 flex overflow-hidden">
-        {/* Tab navigation */}
-        <div className="w-[210px] border-r border-[var(--color-border)] py-3 px-2 flex-shrink-0 flex flex-col overflow-y-auto">
-          <div className="flex-1">
-            <NavGroupLabel label={t('settings.group.personal')} />
-            <TabButton icon="tune" label={t('settings.tab.general')} active={activeTab === 'general'} onClick={() => setActiveTab('general')} />
-            <TabButton icon="dns" label={t('settings.tab.providers')} active={activeTab === 'providers'} onClick={() => setActiveTab('providers')} />
-            <TabButton icon="history_edu" label={t('settings.tab.memory')} active={activeTab === 'memory'} onClick={() => setActiveTab('memory')} />
-            <TabButton icon="monitoring" label={t('settings.tab.activity')} active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
-
-            <NavGroupLabel label={t('settings.group.extensions')} />
-            <TabButton icon="auto_awesome" label={t('settings.tab.skills')} active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
-            <TabButton icon="smart_toy" label={t('settings.tab.agents')} active={activeTab === 'agents'} onClick={() => setActiveTab('agents')} />
-            <TabButton icon="extension" label={t('settings.tab.plugins')} active={activeTab === 'plugins'} onClick={() => setActiveTab('plugins')} />
-
-            <NavGroupLabel label={t('settings.group.integrations')} />
-            <TabButton icon="mouse" label={t('settings.tab.computerUse')} active={activeTab === 'computerUse'} onClick={() => setActiveTab('computerUse')} />
-            <TabButton icon="qr_code_2" label={t('settings.tab.h5Access')} active={activeTab === 'h5Access'} onClick={() => setActiveTab('h5Access')} />
-
-            {developerMode && (
-              <>
-                <NavGroupLabel label={t('settings.group.developer')} />
-                <TabButton icon="chat" label={t('settings.tab.adapters')} active={activeTab === 'adapters'} onClick={() => setActiveTab('adapters')} />
-                <TabButton icon="terminal" label={t('settings.tab.terminal')} active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} />
-                <TabButton icon="dns" label={t('settings.tab.mcp')} active={activeTab === 'mcp'} onClick={() => setActiveTab('mcp')} />
-                <TabButton icon="account_tree" label={t('settings.tab.trace')} active={activeTab === 'trace'} onClick={() => setActiveTab('trace')} />
-                <TabButton icon="monitor_heart" label={t('settings.tab.diagnostics')} active={activeTab === 'diagnostics'} onClick={() => setActiveTab('diagnostics')} />
-              </>
-            )}
-          </div>
-          <div className="border-t border-[var(--color-border)]/40 pt-2 mt-2">
-            <label className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--color-text-secondary)] cursor-pointer hover:bg-[var(--color-surface-hover)]">
-              <span className="flex items-center gap-2.5">
-                <span className="material-symbols-outlined text-[18px]" aria-hidden="true">code</span>
-                {t('settings.developerMode')}
-              </span>
-              <input
-                type="checkbox"
-                role="switch"
-                aria-label={t('settings.developerMode')}
-                checked={developerMode}
-                onChange={toggleDeveloperMode}
-                className="accent-[var(--color-primary)]"
-              />
-            </label>
-            <TabButton icon="info" label={t('settings.tab.about')} active={activeTab === 'about'} onClick={() => setActiveTab('about')} />
-          </div>
+    <div className="flex min-h-0 flex-1 overflow-hidden bg-[var(--color-surface)]">
+      <aside
+        data-testid="settings-sidebar"
+        className="flex w-[250px] shrink-0 flex-col overflow-hidden border-r border-[var(--color-border)] bg-[var(--color-surface-sidebar)]"
+      >
+        <div className="shrink-0 px-3 pb-2 pt-3">
+          <button
+            type="button"
+            onClick={() => useTabStore.getState().closeTab(SETTINGS_TAB_ID)}
+            className="mb-3 inline-flex h-9 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+          >
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />
+            {t('settings.backToApp')}
+          </button>
+          <label className="flex h-9 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 focus-within:border-[var(--color-border-focus)] focus-within:shadow-[var(--shadow-focus-ring)]">
+            <Search className="h-4 w-4 shrink-0 text-[var(--color-text-tertiary)]" strokeWidth={1.9} aria-hidden="true" />
+            <input
+              value={settingsSearch}
+              onChange={(event) => setSettingsSearch(event.target.value)}
+              placeholder={t('settings.searchPlaceholder')}
+              aria-label={t('settings.searchPlaceholder')}
+              className="min-w-0 flex-1 bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-tertiary)]"
+            />
+          </label>
         </div>
 
-        {/* Tab content; trace embeds a full-bleed page that manages its own scroll */}
-        <div className={activeTab === 'trace' ? 'flex-1 flex min-h-0 flex-col overflow-hidden' : 'flex-1 overflow-y-auto px-8 py-6'}>
-          {activeTab === 'providers' && <ProviderSettings />}
-          {activeTab === 'activity' && <ActivitySettings />}
-          {activeTab === 'general' && <GeneralSettings />}
-          {activeTab === 'h5Access' && <H5AccessSettings />}
-          {activeTab === 'adapters' && <AdapterSettings />}
-          {activeTab === 'terminal' && <TerminalSettings showPreferences />}
-          {activeTab === 'mcp' && <McpSettings />}
-          {activeTab === 'agents' && <AgentsSettings />}
-          {activeTab === 'skills' && <SkillSettings />}
-          {activeTab === 'memory' && <MemorySettings />}
-          {activeTab === 'plugins' && <PluginSettings />}
-          {activeTab === 'computerUse' && <ComputerUseSettings />}
-          {activeTab === 'trace' && <TraceList />}
-          {activeTab === 'diagnostics' && <DiagnosticsSettings />}
-          {activeTab === 'about' && <AboutSettings />}
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-3" aria-label={t('settings.title')}>
+          <NavGroupLabel label={t('settings.group.personal')} />
+          <TabButton {...tabButtonProps} icon="tune" label={t('settings.tab.general')} active={activeTab === 'general'} onClick={() => setActiveTab('general')} />
+          <TabButton {...tabButtonProps} icon="dns" label={t('settings.tab.providers')} active={activeTab === 'providers'} onClick={() => setActiveTab('providers')} />
+          <TabButton {...tabButtonProps} icon="history_edu" label={t('settings.tab.memory')} active={activeTab === 'memory'} onClick={() => setActiveTab('memory')} />
+          <TabButton {...tabButtonProps} icon="monitoring" label={t('settings.tab.activity')} active={activeTab === 'activity'} onClick={() => setActiveTab('activity')} />
+
+          <NavGroupLabel label={t('settings.group.extensions')} />
+          <TabButton {...tabButtonProps} icon="auto_awesome" label={t('settings.tab.skills')} active={activeTab === 'skills'} onClick={() => setActiveTab('skills')} />
+          <TabButton {...tabButtonProps} icon="smart_toy" label={t('settings.tab.agents')} active={activeTab === 'agents'} onClick={() => setActiveTab('agents')} />
+          <TabButton {...tabButtonProps} icon="extension" label={t('settings.tab.plugins')} active={activeTab === 'plugins'} onClick={() => setActiveTab('plugins')} />
+
+          <NavGroupLabel label={t('settings.group.integrations')} />
+          <TabButton {...tabButtonProps} icon="mouse" label={t('settings.tab.computerUse')} active={activeTab === 'computerUse'} onClick={() => setActiveTab('computerUse')} />
+          <TabButton {...tabButtonProps} icon="qr_code_2" label={t('settings.tab.h5Access')} active={activeTab === 'h5Access'} onClick={() => setActiveTab('h5Access')} />
+
+          {developerMode && (
+            <>
+              <NavGroupLabel label={t('settings.group.developer')} />
+              <TabButton {...tabButtonProps} icon="chat" label={t('settings.tab.adapters')} active={activeTab === 'adapters'} onClick={() => setActiveTab('adapters')} />
+              <TabButton {...tabButtonProps} icon="terminal" label={t('settings.tab.terminal')} active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} />
+              <TabButton {...tabButtonProps} icon="dns" label={t('settings.tab.mcp')} active={activeTab === 'mcp'} onClick={() => setActiveTab('mcp')} />
+              <TabButton {...tabButtonProps} icon="account_tree" label={t('settings.tab.trace')} active={activeTab === 'trace'} onClick={() => setActiveTab('trace')} />
+              <TabButton {...tabButtonProps} icon="monitor_heart" label={t('settings.tab.diagnostics')} active={activeTab === 'diagnostics'} onClick={() => setActiveTab('diagnostics')} />
+            </>
+          )}
+        </nav>
+
+        <div className="shrink-0 border-t border-[var(--color-border)]/60 px-2 py-2">
+          <label className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]">
+            <span className="flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">code</span>
+              {t('settings.developerMode')}
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              aria-label={t('settings.developerMode')}
+              checked={developerMode}
+              onChange={toggleDeveloperMode}
+              className="accent-[var(--color-primary)]"
+            />
+          </label>
+          <TabButton {...tabButtonProps} icon="info" label={t('settings.tab.about')} active={activeTab === 'about'} onClick={() => setActiveTab('about')} />
         </div>
-      </div>
+      </aside>
+
+      {activeTab === 'trace' ? (
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <TraceList />
+        </section>
+      ) : (
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1040px] px-12 pb-16 pt-12">
+            <header className="mb-10">
+              <h1 className="text-[30px] font-semibold leading-10 tracking-[-0.02em] text-[var(--color-text-primary)]">
+                {activeTabTitle}
+              </h1>
+            </header>
+            <div className="settings-chatgpt-content">
+              {activeTab === 'providers' && <ProviderSettings />}
+              {activeTab === 'activity' && <ActivitySettings />}
+              {activeTab === 'general' && <GeneralSettings />}
+              {activeTab === 'h5Access' && <H5AccessSettings />}
+              {activeTab === 'adapters' && <AdapterSettings />}
+              {activeTab === 'terminal' && <TerminalSettings showPreferences />}
+              {activeTab === 'mcp' && <McpSettings />}
+              {activeTab === 'agents' && <AgentsSettings />}
+              {activeTab === 'skills' && <SkillSettings />}
+              {activeTab === 'memory' && <MemorySettings />}
+              {activeTab === 'plugins' && <PluginSettings />}
+              {activeTab === 'computerUse' && <ComputerUseSettings />}
+              {activeTab === 'diagnostics' && <DiagnosticsSettings />}
+              {activeTab === 'about' && <AboutSettings />}
+            </div>
+          </div>
+        </main>
+      )}
     </div>
   )
 }
@@ -304,20 +343,34 @@ function NavGroupLabel({ label }: { label: string }) {
     </div>
   )
 }
+function TabButton({
+  icon,
+  label,
+  active,
+  onClick,
+  searchQuery = '',
+}: {
+  icon: string
+  label: string
+  active: boolean
+  onClick: () => void
+  searchQuery?: string
+}) {
+  if (searchQuery && !label.toLocaleLowerCase().includes(searchQuery)) return null
 
-function TabButton({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left rounded-lg transition-colors ${
+      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
         active
-          ? 'bg-[var(--color-surface-selected)] text-[var(--color-text-primary)] font-medium'
-          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)]'
+          ? 'bg-[var(--color-surface-selected)] font-semibold text-[var(--color-text-primary)]'
+          : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]'
       }`}
     >
       <span className="material-symbols-outlined text-[18px]" aria-hidden="true">{icon}</span>
-      {label}
+      <span className="truncate">{label}</span>
     </button>
   )
 }
@@ -2645,7 +2698,7 @@ export function GeneralSettings() {
   )
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-[900px]">
       {/* Appearance selector */}
       <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">{t('settings.general.appearanceTitle')}</h2>
       <p className="text-sm text-[var(--color-text-tertiary)] mb-3">{t('settings.general.appearanceDescription')}</p>
@@ -3924,7 +3977,7 @@ const AGENT_SOURCE_ORDER: AgentSource[] = [
   'built-in',
 ]
 
-function AgentsSettings() {
+export function AgentsSettings({ showOverview = true }: { showOverview?: boolean } = {}) {
   const {
     activeAgents,
     allAgents,
@@ -3997,6 +4050,7 @@ function AgentsSettings() {
         </div>
       ) : (
         <div className="flex flex-col gap-6 min-w-0">
+          {showOverview && (
           <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-container-low)] overflow-hidden">
             <div className="grid gap-4 px-5 py-5 min-w-0 xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,1fr)] xl:items-end">
               <div className="min-w-0">
@@ -4036,6 +4090,7 @@ function AgentsSettings() {
               </div>
             </div>
           </section>
+          )}
 
           <div className={`grid gap-4 ${sourceCount >= 2 ? 'xl:grid-cols-2' : ''}`}>
             {AGENT_SOURCE_ORDER.map((source) => {
@@ -4412,7 +4467,7 @@ function SkillSettings() {
   )
 }
 
-function PluginSettings() {
+export function PluginSettings({ showHeader = true }: { showHeader?: boolean } = {}) {
   const selectedPlugin = usePluginStore((s) => s.selectedPlugin)
   const t = useTranslation()
 
@@ -4426,12 +4481,16 @@ function PluginSettings() {
 
   return (
     <div className="w-full min-w-0">
-      <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
-        {t('settings.plugins.title')}
-      </h2>
-      <p className="text-sm text-[var(--color-text-tertiary)] mb-4">
-        {t('settings.plugins.description')}
-      </p>
+      {showHeader && (
+        <>
+          <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
+            {t('settings.plugins.title')}
+          </h2>
+          <p className="text-sm text-[var(--color-text-tertiary)] mb-4">
+            {t('settings.plugins.description')}
+          </p>
+        </>
+      )}
       <PluginList />
     </div>
   )

@@ -6,7 +6,7 @@ import { Settings } from '../pages/Settings'
 import { useSkillStore } from '../stores/skillStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useSessionStore } from '../stores/sessionStore'
-import { useTabStore, SETTINGS_TAB_ID } from '../stores/tabStore'
+import { useTabStore } from '../stores/tabStore'
 import { useUIStore } from '../stores/uiStore'
 
 vi.mock('../api/agents', () => ({
@@ -83,7 +83,7 @@ describe('Settings > Skills tab', () => {
       isLoading: false,
       error: null,
     })
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useUIStore.setState({ activeSettingsTab: 'providers', pendingSettingsTab: null })
     useSkillStore.setState({
       skills: [],
@@ -198,8 +198,9 @@ describe('Settings > Skills tab', () => {
       clearSelection: MOCK_CLEAR_SELECTION,
     })
     useTabStore.setState({
-      activeTabId: SETTINGS_TAB_ID,
-      tabs: [{ sessionId: SETTINGS_TAB_ID, title: 'Settings', type: 'settings', status: 'idle' }],
+      activeTabId: 'session-1',
+      activeSurface: 'settings',
+      tabs: [{ sessionId: 'session-1', title: 'Active session', type: 'session', status: 'idle' }],
     })
 
     render(<Settings />)

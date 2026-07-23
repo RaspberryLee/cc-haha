@@ -6,6 +6,7 @@ import { FilterBar } from './FilterBar'
 import { MarketDisclaimer } from './MarketDisclaimer'
 import { SkillCard } from './SkillCard'
 import { SourceStatusBar } from './SourceStatusBar'
+import { InstalledSkillsOverview } from './InstalledSkillsOverview'
 
 export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string) => void }) {
   const t = useTranslation()
@@ -34,23 +35,31 @@ export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string
   const hasActiveFilters =
     filters.source !== 'all' || filters.security !== 'all' || filters.installed !== 'all'
   const hasQuery = query.trim().length > 0
-  // Group installed skills into their own section on the default browse view,
-  // the way consumer skill stores separate "Installed" from the catalog.
+  // The local installed-skills overview is authoritative on the default view,
+  // so installed Hub entries stay out of the discovery catalog.
   const showInstalledSection = !hasQuery && !hasActiveFilters
-  const installedItems = showInstalledSection
-    ? items.filter((skill) => skill.installState === 'installed')
-    : []
   const catalogItems = showInstalledSection
     ? items.filter((skill) => skill.installState !== 'installed')
     : items
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--color-surface)]">
-      <div className="mx-auto flex w-full max-w-[980px] flex-col gap-5 px-6 pb-8 pt-10 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[900px] flex-col gap-6 px-6 pb-8 pt-8 lg:px-8">
         <header className="flex flex-col items-start gap-1.5">
           <h1 className="text-3xl font-bold leading-10 tracking-[-0.02em] text-[var(--color-text-primary)]">
-            {t('market.title')}
+            {t('settings.tab.skills')}
           </h1>
+          <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+            {t('settings.skills.redirectDescription')}
+          </p>
+        </header>
+
+        <InstalledSkillsOverview />
+
+        <header className="flex flex-col items-start gap-1.5 border-t border-[var(--color-border)]/70 pt-7">
+          <h2 className="text-xl font-semibold tracking-[-0.01em] text-[var(--color-text-primary)]">
+            {t('market.title')}
+          </h2>
           <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
             {t('market.subtitle')}
           </p>
@@ -59,7 +68,7 @@ export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string
         <MarketDisclaimer />
 
         <section className="sticky top-0 z-20 -mx-1 flex flex-col gap-2.5 bg-[var(--color-surface)]/95 px-1 py-1.5 backdrop-blur-xl">
-          <div className="flex min-h-12 items-center gap-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-container-lowest)] px-4 transition-colors focus-within:border-[var(--color-border-focus)] focus-within:shadow-[var(--shadow-focus-ring)]">
+          <div className="flex min-h-10 items-center gap-2.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-container-lowest)] px-4 transition-colors focus-within:border-[var(--color-border-focus)] focus-within:shadow-[var(--shadow-focus-ring)]">
             <Search className="h-4 w-4 flex-shrink-0 text-[var(--color-text-tertiary)]" strokeWidth={2} aria-hidden="true" />
             <input
               data-testid="market-search-input"
@@ -138,26 +147,8 @@ export function MarketHome({ onRequestInstall }: { onRequestInstall: (id: string
         {!isLoading && items.length > 0 && (
           <>
             <div className="flex flex-col gap-7" data-testid="market-grid">
-              {installedItems.length > 0 && (
-                <section data-testid="market-installed-section">
-                  <h2 className="mb-3 border-b border-[var(--color-border)]/60 pb-2 text-base font-semibold text-[var(--color-text-primary)]">
-                    {t('market.section.installed')}
-                  </h2>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    {installedItems.map((skill) => (
-                      <SkillCard
-                        key={skill.id}
-                        skill={skill}
-                        onOpen={(id) => void useMarketStore.getState().openDetail(id)}
-                        onInstall={onRequestInstall}
-                        installing={installingIds.has(skill.id)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              )}
               <section>
-                {installedItems.length > 0 && (
+                {showInstalledSection && (
                   <h2 className="mb-3 border-b border-[var(--color-border)]/60 pb-2 text-base font-semibold text-[var(--color-text-primary)]">
                     {t('market.section.discover')}
                   </h2>

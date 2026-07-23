@@ -1654,7 +1654,7 @@ describe('MessageList nested tool calls', () => {
 
     expect(useUIStore.getState().pendingSettingsTab).toBe('memory')
     expect(useUIStore.getState().pendingMemoryPath).toBe('/Users/test/.claude/projects/example/memory/preferences.md')
-    expect(useTabStore.getState().activeTabId).toBe('__settings__')
+    expect(useTabStore.getState().activeSurface).toBe('settings')
   })
 
   it('promotes memory file writes from tool calls into a dedicated memory card', () => {

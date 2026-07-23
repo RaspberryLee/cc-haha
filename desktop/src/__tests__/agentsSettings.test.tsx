@@ -7,7 +7,7 @@ import { useAgentStore } from '../stores/agentStore'
 import { useSkillStore } from '../stores/skillStore'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useSessionStore } from '../stores/sessionStore'
-import { SETTINGS_TAB_ID, useTabStore } from '../stores/tabStore'
+import { useTabStore } from '../stores/tabStore'
 import { useUIStore } from '../stores/uiStore'
 
 vi.mock('../api/agents', () => ({
@@ -134,11 +134,11 @@ const MOCK_SKILL_DETAIL = {
 }
 
 function switchToAgentsTab() {
-  fireEvent.click(screen.getByText('Agents'))
+  fireEvent.click(screen.getByRole('button', { name: 'Agents' }))
 }
 
 function switchToSkillsTab() {
-  fireEvent.click(screen.getByText('Skills'))
+  fireEvent.click(screen.getByRole('button', { name: 'Skills' }))
 }
 
 describe('Settings > Agents tab', () => {
@@ -146,6 +146,7 @@ describe('Settings > Agents tab', () => {
     useSettingsStore.setState({ locale: 'en' })
     useTabStore.setState({
       activeTabId: 'session-1',
+      activeSurface: null,
       tabs: [{ sessionId: 'session-1', title: 'Test', type: 'session', status: 'idle' }],
     })
     useUIStore.setState({ activeSettingsTab: 'providers', pendingSettingsTab: null })
@@ -189,6 +190,29 @@ describe('Settings > Agents tab', () => {
     expect(screen.getByText('Agents')).toBeInTheDocument()
   })
 
+  it('returns to the preserved work tab from the standalone settings page', () => {
+    useTabStore.setState({ activeSurface: 'settings' })
+
+    render(<Settings />)
+    fireEvent.click(screen.getByRole('button', { name: 'Back to app' }))
+
+    expect(useTabStore.getState().activeSurface).toBeNull()
+    expect(useTabStore.getState().activeTabId).toBe('session-1')
+    expect(useTabStore.getState().tabs).toHaveLength(1)
+  })
+  it('filters the ChatGPT-style settings navigation from the search field', () => {
+    render(<Settings />)
+
+    expect(screen.getByTestId('settings-sidebar')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search settings...' }), {
+      target: { value: 'Agents' },
+    })
+
+    expect(screen.getByRole('button', { name: 'Agents' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'General' })).not.toBeInTheDocument()
+  })
+
+
   it('shows loading spinner when fetching agents', () => {
     useAgentStore.setState({ isLoading: true, allAgents: [], activeAgents: [], fetchAgents: noopFetch })
     render(<Settings />)
@@ -207,8 +231,9 @@ describe('Settings > Agents tab', () => {
       fetchAgents,
     })
     useTabStore.setState({
-      activeTabId: SETTINGS_TAB_ID,
-      tabs: [{ sessionId: SETTINGS_TAB_ID, title: 'Settings', type: 'settings', status: 'idle' }],
+      activeTabId: 'session-1',
+      activeSurface: 'settings',
+      tabs: [{ sessionId: 'session-1', title: 'Active session', type: 'session', status: 'idle' }],
     })
 
     render(<Settings />)

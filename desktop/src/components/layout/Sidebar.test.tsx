@@ -237,7 +237,7 @@ describe('Sidebar', () => {
     window.localStorage.removeItem(PROJECT_ORGANIZATION_STORAGE_KEY)
     window.localStorage.removeItem(PROJECT_SORT_STORAGE_KEY)
 
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useSessionStore.setState({
       sessions: [],
       activeSessionId: null,
@@ -264,7 +264,7 @@ describe('Sidebar', () => {
   afterEach(() => {
     vi.useRealTimers()
     cleanup()
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     window.localStorage.removeItem(PROJECT_ORDER_STORAGE_KEY)
     window.localStorage.removeItem(PROJECT_PINNED_STORAGE_KEY)
     window.localStorage.removeItem(PROJECT_HIDDEN_STORAGE_KEY)
@@ -1258,12 +1258,8 @@ describe('Sidebar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Skills Market' }))
 
-    expect(useTabStore.getState().activeTabId).toBe('__market__')
-    expect(useTabStore.getState().tabs).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ sessionId: '__market__', title: 'Skills Market', type: 'market' }),
-      ]),
-    )
+    expect(useTabStore.getState().activeSurface).toBe('market')
+    expect(useTabStore.getState().tabs.some((tab) => tab.type === 'market')).toBe(false)
   })
 
   it('shows a loading state instead of an empty session list while initial fetch is pending', () => {

@@ -111,7 +111,7 @@ afterEach(async () => {
 
 function resetPageStores() {
   cleanup()
-  useTabStore.setState({ tabs: [], activeTabId: null })
+  useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
   useSessionStore.setState({ sessions: [], activeSessionId: null, isLoading: false, error: null })
   useChatStore.setState({ sessions: {} })
 }
@@ -183,7 +183,7 @@ describe('Content-only pages render without errors', () => {
       await Promise.resolve()
     })
     expect(container.querySelector('textarea')).toBeInTheDocument()
-    expect(container.innerHTML).toContain('New session')
+    expect(container.innerHTML).toContain('What are we building today?')
     expect(container.innerHTML).toContain('Ask anything')
   })
 
@@ -270,7 +270,7 @@ describe('Content-only pages render without errors', () => {
     })
     const { container } = render(<ActiveSession />)
     // With empty messages, the hero is shown
-    expect(container.innerHTML).toContain('New session')
+    expect(container.innerHTML).toContain('What are we building today?')
     // ChatInput has a textarea
     const textarea = container.querySelector('textarea')
     expect(textarea).toBeInTheDocument()
@@ -440,7 +440,7 @@ describe('Content-only pages render without errors', () => {
     expect(sendMessage).not.toHaveBeenCalled()
     expect(await screen.findByText('Available MCP tools')).toBeInTheDocument()
     fireEvent.click(screen.getByText('deepwiki'))
-    expect(useTabStore.getState().activeTabId).toBe('__settings__')
+    expect(useTabStore.getState().activeSurface).toBe('settings')
     expect(useUIStore.getState().pendingSettingsTab).toBe('mcp')
 
     resetPageStores()
@@ -566,7 +566,7 @@ describe('Content-only pages render without errors', () => {
     fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' })
 
     expect(sendMessage).not.toHaveBeenCalled()
-    expect(useTabStore.getState().activeTabId).toBe('__settings__')
+    expect(useTabStore.getState().activeSurface).toBe('settings')
     expect(useUIStore.getState().pendingSettingsTab).toBe('plugins')
 
     resetPageStores()

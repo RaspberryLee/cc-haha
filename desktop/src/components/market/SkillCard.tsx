@@ -31,8 +31,8 @@ export function SkillCard({
   return (
     <article
       data-testid={`market-skill-card-${skill.id}`}
-      className="group relative isolate flex min-h-[212px] min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--color-border)]/70 bg-[var(--color-surface-container-low)] p-4 transition-[background-color,border-color,box-shadow] duration-200 hover:border-[var(--color-border-focus)] hover:bg-[var(--color-surface)] hover:shadow-[var(--shadow-dropdown)]"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '212px' }}
+      className="group relative isolate flex min-h-[172px] min-w-0 flex-col overflow-hidden rounded-2xl border border-transparent bg-transparent p-3 transition-[background-color,border-color,box-shadow] duration-200 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-container-lowest)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.05)]"
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '172px' }}
     >
       <button
         type="button"
@@ -41,7 +41,7 @@ export function SkillCard({
         className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus-ring)]"
       />
 
-      <div className="pointer-events-none absolute inset-x-5 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[var(--color-brand)]/55 to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      <div className="hidden" />
 
       <div className="pointer-events-none relative z-10 flex items-start gap-3.5">
         <SkillAvatar skill={skill} size={46} />
@@ -97,7 +97,7 @@ export function SkillCard({
         </div>
       )}
 
-      <footer className="pointer-events-none relative z-10 mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-2 border-t border-[var(--color-border)]/60 pt-3">
+      <footer className="pointer-events-none relative z-10 mt-auto flex flex-wrap items-center justify-between gap-x-2 gap-y-2 pt-2">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <SecurityBadge status={skill.securityStatus} />
           {/* The quick-install button already communicates "installable" — skip the badge when the button renders. */}

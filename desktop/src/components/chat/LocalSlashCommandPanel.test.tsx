@@ -29,7 +29,7 @@ vi.mock('../../api/skills', () => ({
 
 import { LocalSlashCommandPanel } from './LocalSlashCommandPanel'
 import { useSettingsStore } from '../../stores/settingsStore'
-import { useTabStore, SETTINGS_TAB_ID } from '../../stores/tabStore'
+import { useTabStore } from '../../stores/tabStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useSkillStore } from '../../stores/skillStore'
 import type { SessionContextSnapshot, SessionInspectionResponse } from '../../api/sessions'
@@ -135,7 +135,7 @@ describe('LocalSlashCommandPanel memory context', () => {
     await waitFor(() => {
       expect(useUIStore.getState().pendingSettingsTab).toBe('memory')
       expect(useUIStore.getState().pendingMemoryPath).toBe('/Users/test/.claude/projects/demo/memory/MEMORY.md')
-      expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
+      expect(useTabStore.getState().activeSurface).toBe('settings')
     })
   })
 
@@ -160,7 +160,7 @@ describe('LocalSlashCommandPanel memory context', () => {
     await waitFor(() => {
       expect(useUIStore.getState().pendingSettingsTab).toBe('memory')
       expect(useUIStore.getState().pendingMemoryPath).toBeNull()
-      expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
+      expect(useTabStore.getState().activeSurface).toBe('settings')
     })
   })
 
@@ -192,7 +192,7 @@ describe('LocalSlashCommandPanel memory context', () => {
 
     await waitFor(() => {
       expect(fetchSkillDetail).toHaveBeenCalledWith('user', 'ppt-generator', '/workspace/demo', 'skills')
-      expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
+      expect(useTabStore.getState().activeSurface).toBe('settings')
     })
     expect(useUIStore.getState().pendingSettingsTab).toBe('skills')
     expect(onClose).toHaveBeenCalled()

@@ -11,7 +11,7 @@ vi.mock('../api/sessions', () => ({
 
 describe('tabStore', () => {
   beforeEach(() => {
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     localStorage.clear()
     useSessionRuntimeStore.setState({ selections: {} })
     vi.mocked(sessionsApi.list).mockResolvedValue({ sessions: [] } as never)
@@ -30,23 +30,38 @@ describe('tabStore', () => {
     expect(useTabStore.getState().activeTabId).toBe('session-1')
   })
 
-  it('repairs an existing special tab type when opened through its canonical entrypoint', () => {
+  it('opens an app surface without adding it to the work tab list', () => {
     useTabStore.setState({
-      tabs: [{ sessionId: SETTINGS_TAB_ID, title: 'Market', type: 'market', status: 'idle' }],
-      activeTabId: SETTINGS_TAB_ID,
+      tabs: [
+        { sessionId: 'session-1', title: 'Session', type: 'session', status: 'idle' },
+        { sessionId: SETTINGS_TAB_ID, title: 'Legacy settings', type: 'settings', status: 'idle' },
+      ],
+      activeTabId: 'session-1',
+      activeSurface: null,
     })
 
     useTabStore.getState().openTab(SETTINGS_TAB_ID, 'Settings', 'settings')
 
     expect(useTabStore.getState().tabs).toEqual([
-      {
-        sessionId: SETTINGS_TAB_ID,
-        title: 'Settings',
-        type: 'settings',
-        status: 'idle',
-      },
+      { sessionId: 'session-1', title: 'Session', type: 'session', status: 'idle' },
     ])
-    expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
+    expect(useTabStore.getState().activeTabId).toBe('session-1')
+    expect(useTabStore.getState().activeSurface).toBe('settings')
+    expect(localStorage.getItem('cc-haha-open-tabs')).toBe(JSON.stringify({
+      openTabs: [{ sessionId: 'session-1', title: 'Session', type: 'session' }],
+      activeTabId: 'session-1',
+      activeSurface: 'settings',
+    }))
+  })
+
+  it('returns to the selected work tab when it is activated from an app surface', () => {
+    useTabStore.getState().openTab('session-1', 'Session')
+    useTabStore.getState().openTab(MARKET_TAB_ID, 'Market', 'market')
+
+    useTabStore.getState().setActiveTab('session-1')
+
+    expect(useTabStore.getState().activeTabId).toBe('session-1')
+    expect(useTabStore.getState().activeSurface).toBeNull()
   })
 
   it('stores a promoted terminal runtime id on new terminal tabs', () => {
@@ -168,15 +183,9 @@ describe('tabStore', () => {
     resolveSessions({ sessions: [{ id: 'session-1', title: 'Old Session' }] })
     await restore
 
-    expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
-    expect(useTabStore.getState().tabs).toEqual([
-      {
-        sessionId: SETTINGS_TAB_ID,
-        title: 'Settings',
-        type: 'settings',
-        status: 'idle',
-      },
-    ])
+    expect(useTabStore.getState().activeTabId).toBeNull()
+    expect(useTabStore.getState().activeSurface).toBe('settings')
+    expect(useTabStore.getState().tabs).toEqual([])
   })
 
   it('restores the market tab without requiring a server session', async () => {
@@ -187,15 +196,14 @@ describe('tabStore', () => {
 
     await useTabStore.getState().restoreTabs()
 
-    expect(useTabStore.getState().tabs).toEqual([
-      {
-        sessionId: MARKET_TAB_ID,
-        title: 'Market',
-        type: 'market',
-        status: 'idle',
-      },
-    ])
-    expect(useTabStore.getState().activeTabId).toBe(MARKET_TAB_ID)
+    expect(useTabStore.getState().tabs).toEqual([])
+    expect(useTabStore.getState().activeTabId).toBeNull()
+    expect(useTabStore.getState().activeSurface).toBe('market')
+    expect(localStorage.getItem('cc-haha-open-tabs')).toBe(JSON.stringify({
+      openTabs: [],
+      activeTabId: null,
+      activeSurface: 'market',
+    }))
   })
 
   it('hydrates restored tabs with authoritative transcript runtime metadata', async () => {
@@ -239,20 +247,8 @@ describe('tabStore', () => {
 
     await useTabStore.getState().restoreTabs()
 
-    expect(useTabStore.getState().tabs).toEqual([
-      {
-        sessionId: SETTINGS_TAB_ID,
-        title: 'Settings',
-        type: 'settings',
-        status: 'idle',
-      },
-      {
-        sessionId: MARKET_TAB_ID,
-        title: 'Market',
-        type: 'market',
-        status: 'idle',
-      },
-    ])
-    expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
+    expect(useTabStore.getState().tabs).toEqual([])
+    expect(useTabStore.getState().activeTabId).toBeNull()
+    expect(useTabStore.getState().activeSurface).toBe('settings')
   })
 })

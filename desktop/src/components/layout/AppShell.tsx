@@ -47,6 +47,7 @@ export function AppShell() {
   const isMobileShell = useMobileViewport() && !desktopRuntime
   const tabs = useTabStore((s) => s.tabs)
   const activeTabId = useTabStore((s) => s.activeTabId)
+  const activeSurface = useTabStore((s) => s.activeSurface)
   const setActiveTab = useTabStore((s) => s.setActiveTab)
   const activeSession = useSessionStore((s) =>
     activeTabId ? s.sessions.find((session) => session.id === activeTabId) ?? null : null,
@@ -54,6 +55,8 @@ export function AppShell() {
   const wasMobileShellRef = useRef(false)
   const effectiveSidebarOpen = isMobileShell ? mobileSidebarOpen : sidebarOpen
   const activeTab = tabs.find((tab) => tab.sessionId === activeTabId)
+  const isSettingsSurface = activeSurface === 'settings'
+
   const isActiveChatTab = isChatTab(activeTab)
   const mobileSessionTitle = activeSession?.title || activeTab?.title || t('session.untitled')
   const mobileSessionUpdated = (() => {
@@ -159,14 +162,14 @@ export function AppShell() {
 
   useEffect(() => {
     if (!ready || !isMobileShell) return
-    if (isChatTab(activeTab) || (!activeTab && !activeTabId)) return
+    if (!activeSurface && (isChatTab(activeTab) || (!activeTab && !activeTabId))) return
     const nextChatTab = tabs.find(isChatTab)
     if (nextChatTab) {
       setActiveTab(nextChatTab.sessionId)
       return
     }
-    useTabStore.setState({ activeTabId: null })
-  }, [activeTab, activeTabId, isMobileShell, ready, setActiveTab, tabs])
+    useTabStore.setState({ activeTabId: null, activeSurface: null })
+  }, [activeSurface, activeTab, activeTabId, isMobileShell, ready, setActiveTab, tabs])
 
   const setEffectiveSidebarOpen = (open: boolean) => {
     if (isMobileShell) {
@@ -236,17 +239,17 @@ export function AppShell() {
         data-testid="sidebar-shell"
         data-state={effectiveSidebarOpen ? 'open' : 'closed'}
         data-mobile={isMobileShell ? 'true' : 'false'}
-        className={`sidebar-shell${isMobileShell ? ' sidebar-shell--mobile' : ''}`}
+        className={`sidebar-shell${isMobileShell ? ' sidebar-shell--mobile' : ''}${isSettingsSurface ? ' hidden' : ''}`}
         {...sidebarHiddenProps}
       >
-        {!isMobileShell || effectiveSidebarOpen ? (
+        {!isSettingsSurface && (!isMobileShell || effectiveSidebarOpen) ? (
           <Sidebar isMobile={isMobileShell} onRequestClose={() => setEffectiveSidebarOpen(false)} />
         ) : null}
       </div>
       <main
         id="content-area"
         data-sidebar-state={effectiveSidebarOpen ? 'open' : 'closed'}
-        className={`min-w-0 flex-1 flex flex-col overflow-hidden${isMobileShell ? ' app-shell-main--mobile' : ''}`}
+        className={`app-main-surface min-w-0 flex-1 flex flex-col overflow-hidden${isMobileShell ? ' app-shell-main--mobile' : ''}${isSettingsSurface ? ' app-main-surface--settings' : ''}`}
       >
         {isMobileShell ? (
           <div

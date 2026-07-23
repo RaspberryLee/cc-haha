@@ -65,6 +65,7 @@ function isSessionTabId(tabId: string | null) {
 export function TabBar() {
   const tabs = useTabStore((s) => s.tabs)
   const activeTabId = useTabStore((s) => s.activeTabId)
+  const activeSurface = useTabStore((s) => s.activeSurface)
   const setActiveTab = useTabStore((s) => s.setActiveTab)
   const closeTab = useTabStore((s) => s.closeTab)
   const sessionTabIds = useMemo(
@@ -80,7 +81,7 @@ export function TabBar() {
   ))
   const disconnectSession = useChatStore((s) => s.disconnectSession)
   const activeTab = tabs.find((tab) => tab.sessionId === activeTabId) ?? null
-  const isActiveSessionTab = isSessionTab(activeTab) || isSessionTabId(activeTabId)
+  const isActiveSessionTab = !activeSurface && (isSessionTab(activeTab) || isSessionTabId(activeTabId))
   const activeSession = useSessionStore((state) =>
     activeTabId ? state.sessions.find((session) => session.id === activeTabId) : undefined,
   )
@@ -419,7 +420,7 @@ export function TabBar() {
             ref={(node) => { tabRefs.current.set(tab.sessionId, node) }}
             tab={tab}
             isRunning={runningSessionIds.has(tab.sessionId)}
-            isActive={tab.sessionId === activeTabId}
+            isActive={!activeSurface && tab.sessionId === activeTabId}
             isDragOver={dragOverIndex === index}
             isDragging={tab.sessionId === draggingSessionId}
             dragOffsetX={tab.sessionId === draggingSessionId ? dragOffsetX : 0}
@@ -432,42 +433,44 @@ export function TabBar() {
         ))}
       </div>
 
-      <div className="flex shrink-0 items-center gap-1 border-l border-[var(--color-border)]/70 px-2">
-        {showActivityButton && activeTabId && (
-          <SessionActivityButton sessionId={activeTabId} />
-        )}
-        {isDesktopRuntime && isActiveSessionTab && (
-          <OpenProjectMenu path={openProjectPath} />
-        )}
-        <ToolbarIconButton
-          icon={<SquareTerminal size={17} strokeWidth={1.9} />}
-          label={t('tabs.openTerminal')}
-          onClick={() => {
-            if (activeTabId && isActiveSessionTab) {
-              useTerminalPanelStore.getState().togglePanel(activeTabId)
-              return
-            }
-            useTabStore.getState().openTerminalTab()
-          }}
-          active={isTerminalPanelOpen}
-        />
-        {isActiveSessionTab && activeTabId && (
+      {!activeSurface && (
+        <div className="flex shrink-0 items-center gap-1 border-l border-[var(--color-border)]/70 px-2">
+          {showActivityButton && activeTabId && (
+            <SessionActivityButton sessionId={activeTabId} />
+          )}
+          {isDesktopRuntime && isActiveSessionTab && (
+            <OpenProjectMenu path={openProjectPath} />
+          )}
           <ToolbarIconButton
-            icon={isWorkspacePanelOpen ? <FolderOpen size={18} strokeWidth={1.9} /> : <Folder size={18} strokeWidth={1.9} />}
-            label={t(isWorkspacePanelOpen ? 'tabs.hideWorkspace' : 'tabs.showWorkspace')}
+            icon={<SquareTerminal size={17} strokeWidth={1.9} />}
+            label={t('tabs.openTerminal')}
             onClick={() => {
-              const workbench = useWorkspacePanelStore.getState()
-              if (workbench.isPanelOpen(activeTabId) && workbench.getMode(activeTabId) === 'workspace') {
-                workbench.closePanel(activeTabId)
-              } else {
-                workbench.setMode(activeTabId, 'workspace')
-                workbench.openPanel(activeTabId)
+              if (activeTabId && isActiveSessionTab) {
+                useTerminalPanelStore.getState().togglePanel(activeTabId)
+                return
               }
+              useTabStore.getState().openTerminalTab()
             }}
-            active={isWorkspacePanelOpen}
+            active={isTerminalPanelOpen}
           />
-        )}
-      </div>
+          {isActiveSessionTab && activeTabId && (
+            <ToolbarIconButton
+              icon={isWorkspacePanelOpen ? <FolderOpen size={18} strokeWidth={1.9} /> : <Folder size={18} strokeWidth={1.9} />}
+              label={t(isWorkspacePanelOpen ? 'tabs.hideWorkspace' : 'tabs.showWorkspace')}
+              onClick={() => {
+                const workbench = useWorkspacePanelStore.getState()
+                if (workbench.isPanelOpen(activeTabId) && workbench.getMode(activeTabId) === 'workspace') {
+                  workbench.closePanel(activeTabId)
+                } else {
+                  workbench.setMode(activeTabId, 'workspace')
+                  workbench.openPanel(activeTabId)
+                }
+              }}
+              active={isWorkspacePanelOpen}
+            />
+          )}
+        </div>
+      )}
 
       {isDesktopRuntime && (
         <div

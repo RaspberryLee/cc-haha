@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   openTraceTab: vi.fn(),
   tabState: {
     activeTabId: null as string | null,
+    activeSurface: null as 'settings' | 'scheduled' | 'market' | 'traces' | null,
     tabs: [] as Array<{ sessionId: string; title: string; type: string; status: string }>,
   },
 }))
@@ -41,22 +42,29 @@ vi.mock('../../stores/tabStore', () => {
   const useTabStore = (selector: (state: {
     tabs: typeof mocks.tabState.tabs
     activeTabId: string | null
+    activeSurface: typeof mocks.tabState.activeSurface
     setActiveTab: typeof mocks.setActiveTab
   }) => unknown) => selector({
     tabs: mocks.tabState.tabs,
     activeTabId: mocks.tabState.activeTabId,
+    activeSurface: mocks.tabState.activeSurface,
     setActiveTab: mocks.setActiveTab,
   })
   useTabStore.getState = () => ({
     restoreTabs: mocks.restoreTabs,
     activeTabId: mocks.tabState.activeTabId,
+    activeSurface: mocks.tabState.activeSurface,
     tabs: mocks.tabState.tabs,
     openTab: mocks.openTab,
     openTraceTab: mocks.openTraceTab,
     setActiveTab: mocks.setActiveTab,
   })
-  useTabStore.setState = (next: { activeTabId?: string | null }) => {
+  useTabStore.setState = (next: {
+    activeTabId?: string | null
+    activeSurface?: typeof mocks.tabState.activeSurface
+  }) => {
     if ('activeTabId' in next) mocks.tabState.activeTabId = next.activeTabId ?? null
+    if ('activeSurface' in next) mocks.tabState.activeSurface = next.activeSurface ?? null
   }
   return {
     SETTINGS_TAB_ID: '__settings__',
@@ -132,8 +140,10 @@ describe('AppShell boot flow', () => {
     mocks.openTraceTab.mockReset()
     mocks.setActiveTab.mockImplementation((sessionId: string) => {
       mocks.tabState.activeTabId = sessionId
+      mocks.tabState.activeSurface = null
     })
     mocks.tabState.activeTabId = null
+    mocks.tabState.activeSurface = null
     mocks.tabState.tabs = []
     useSessionStore.setState({ sessions: [], activeSessionId: null, isLoading: false, error: null })
     useUIStore.setState({ sidebarOpen: true })
@@ -152,6 +162,33 @@ describe('AppShell boot flow', () => {
     expect(screen.getByText('updates loaded')).toBeInTheDocument()
   })
 
+  it('keeps the global work tabs above settings while settings owns the full content width', async () => {
+    mocks.tabState.activeTabId = 'session-1'
+    mocks.tabState.activeSurface = 'settings'
+    mocks.tabState.tabs = [
+      { sessionId: 'session-1', title: 'Existing session', type: 'session', status: 'idle' },
+    ]
+
+    render(<AppShell />)
+
+    expect(await screen.findByText('tabs loaded')).toBeInTheDocument()
+    expect(screen.getByText('content loaded')).toBeInTheDocument()
+    expect(screen.queryByText('sidebar loaded')).not.toBeInTheDocument()
+  })
+
+  it('keeps the global work tabs and project sidebar above capability center', async () => {
+    mocks.tabState.activeTabId = 'session-1'
+    mocks.tabState.activeSurface = 'market'
+    mocks.tabState.tabs = [
+      { sessionId: 'session-1', title: 'Existing session', type: 'session', status: 'idle' },
+    ]
+
+    render(<AppShell />)
+
+    expect(await screen.findByText('tabs loaded')).toBeInTheDocument()
+    expect(screen.getByText('sidebar loaded')).toBeInTheDocument()
+    expect(screen.getByText('content loaded')).toBeInTheDocument()
+  })
   it('shows startup diagnostics instead of a blank shell when bootstrap fails', async () => {
     mocks.fetchAll.mockRejectedValueOnce(new Error('settings file could not be read'))
 
@@ -377,9 +414,9 @@ describe('AppShell boot flow', () => {
 
   it('keeps browser H5 mobile on chat tabs when settings was restored as active', async () => {
     mocks.isMobile = true
-    mocks.tabState.activeTabId = '__settings__'
+    mocks.tabState.activeTabId = 'session-1'
+    mocks.tabState.activeSurface = 'settings'
     mocks.tabState.tabs = [
-      { sessionId: '__settings__', title: 'Settings', type: 'settings', status: 'idle' },
       { sessionId: 'session-1', title: 'Existing session', type: 'session', status: 'idle' },
     ]
 

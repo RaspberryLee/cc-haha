@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowUp, Bug, Hammer, ScanSearch, SearchCode } from 'lucide-react'
 import { ApiError } from '../api/client'
 import { agentsApi } from '../api/agents'
 import { skillsApi } from '../api/skills'
@@ -131,6 +132,36 @@ export function EmptySession() {
     : undefined
   const draftModelLabel = draftRuntimeSelection?.modelId ?? currentModel?.name ?? currentModel?.id
   const isMobileComposer = useMobileViewport() && !isDesktopRuntime()
+  const starterPrompts = useMemo(() => [
+    {
+      key: 'explore',
+      label: t('empty.starter.explore'),
+      prompt: t('empty.starter.explorePrompt'),
+      icon: SearchCode,
+      color: 'text-[#4f8df7]',
+    },
+    {
+      key: 'build',
+      label: t('empty.starter.build'),
+      prompt: t('empty.starter.buildPrompt'),
+      icon: Hammer,
+      color: 'text-[#9b6bf2]',
+    },
+    {
+      key: 'review',
+      label: t('empty.starter.review'),
+      prompt: t('empty.starter.reviewPrompt'),
+      icon: ScanSearch,
+      color: 'text-[#16a66a]',
+    },
+    {
+      key: 'fix',
+      label: t('empty.starter.fix'),
+      prompt: t('empty.starter.fixPrompt'),
+      icon: Bug,
+      color: 'text-[#ed6a35]',
+    },
+  ], [t])
 
   useEffect(() => {
     textareaRef.current?.focus()
@@ -587,23 +618,32 @@ export function EmptySession() {
       textareaRef.current?.setSelectionRange(replacement.cursorPos, replacement.cursorPos)
     })
   }
+  const selectStarterPrompt = (prompt: string) => {
+    setInput(prompt)
+    requestAnimationFrame(() => {
+      const inputElement = textareaRef.current
+      inputElement?.focus()
+      inputElement?.setSelectionRange(prompt.length, prompt.length)
+    })
+  }
+
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden bg-[var(--color-surface)]">
-      <div className={`flex flex-1 flex-col items-center justify-center ${
+      <div className={`flex flex-1 flex-col items-center ${
         isMobileComposer ? 'px-6 pb-[230px] pt-10' : 'p-8'
       }`}>
         <div className={`flex flex-col items-center text-center ${
-          isMobileComposer ? 'max-w-[300px]' : 'max-w-md'
+          isMobileComposer ? 'max-w-[300px]' : 'max-w-4xl flex-1 justify-center pb-8'
         }`}>
           <img
             src={publicAssetPath('app-icon.png')}
             alt="Claude Code Haha"
-            className={isMobileComposer ? 'mb-4 h-16 w-16' : 'mb-5 h-16 w-16'}
+            className={isMobileComposer ? 'mb-4 h-16 w-16' : 'mb-5 h-12 w-12'}
           />
           <h1
             className={`mb-2 font-extrabold tracking-tight text-[var(--color-text-primary)] ${
-              isMobileComposer ? 'text-2xl' : 'text-3xl'
+              isMobileComposer ? 'text-2xl' : 'text-[30px]'
             }`}
             style={{ fontFamily: 'var(--font-headline)' }}
           >
@@ -617,6 +657,26 @@ export function EmptySession() {
           >
             {t('empty.subtitle')}
           </p>
+          {!isMobileComposer && (
+            <div className="mt-9 grid w-full grid-cols-2 gap-3 lg:grid-cols-4" data-testid="empty-session-starters">
+              {starterPrompts.map((starter) => {
+                const StarterIcon = starter.icon
+                return (
+                  <button
+                    key={starter.key}
+                    type="button"
+                    onClick={() => selectStarterPrompt(starter.prompt)}
+                    className="group flex min-h-[118px] flex-col items-start justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-[background-color,border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--color-border-focus)] hover:bg-[var(--color-surface-container-lowest)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus-ring)]"
+                  >
+                    <StarterIcon className={`h-[18px] w-[18px] ${starter.color}`} strokeWidth={1.9} aria-hidden="true" />
+                    <span className="text-[13px] font-semibold leading-5 text-[var(--color-text-primary)]">
+                      {starter.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
       {/* Desktop keeps the composer centered under the greeting, ChatGPT style;
@@ -626,15 +686,15 @@ export function EmptySession() {
         className={`z-30 flex justify-center ${
         isMobileComposer
           ? 'absolute left-0 right-0 bottom-0 px-3 pb-[calc(env(safe-area-inset-bottom)+10px)]'
-          : 'mt-8 w-full px-8'
+          : 'w-full shrink-0 px-8 pb-3'
       }`}
       >
-        <div className={`flex w-full flex-col ${isMobileComposer ? 'max-w-none' : 'max-w-3xl'}`}>
+        <div className={`flex w-full flex-col ${isMobileComposer ? 'max-w-none' : 'max-w-[860px]'}`}>
           <div
             ref={panelRef}
             data-testid="empty-session-composer-panel"
             className={`glass-panel relative flex flex-col gap-3 overflow-visible ${
-              isMobileComposer ? 'rounded-2xl p-3 shadow-[0_-12px_36px_rgba(54,35,28,0.12)]' : 'rounded-xl p-0'
+              isMobileComposer ? 'rounded-2xl p-3 shadow-[0_-12px_36px_rgba(54,35,28,0.12)]' : 'rounded-[22px] p-0 shadow-[0_12px_36px_rgba(0,0,0,0.08)]'
             } ${isDragActive ? 'composer-drop-target-active' : ''}`}
             {...dragHandlers}
           >
@@ -643,6 +703,19 @@ export function EmptySession() {
                 testId="empty-session-drop-overlay"
                 title={t('chat.dropFilesTitle')}
                 description={t('chat.dropFilesHint')}
+              />
+            )}
+            {!isMobileComposer && (
+              <RepositoryLaunchControls
+                workDir={workDir}
+                onWorkDirChange={handleWorkDirChange}
+                branch={selectedBranch}
+                onBranchChange={setSelectedBranch}
+                useWorktree={useWorktree}
+                onUseWorktreeChange={setUseWorktree}
+                onLaunchReadyChange={setRepositoryLaunchReady}
+                disabled={isSubmitting}
+                placement="composerTop"
               />
             )}
 
@@ -758,7 +831,7 @@ export function EmptySession() {
                 />
               </div>
 
-              <div className={`border-t border-[var(--color-border-separator)] pt-3 ${
+              <div className={`pt-2 ${
                 isMobileComposer ? 'flex flex-wrap items-center gap-2' : 'flex items-center justify-between'
               }`}>
                 <div className="flex shrink-0 items-center gap-2">
@@ -817,31 +890,17 @@ export function EmptySession() {
                     onClick={handleSubmit}
                     disabled={!canSubmit}
                     aria-label={t('common.run')}
-                    title={isMobileComposer ? t('common.run') : undefined}
-                    className={`flex shrink-0 items-center justify-center gap-1 rounded-lg bg-[image:var(--gradient-btn-primary)] text-xs font-semibold text-[var(--color-btn-primary-fg)] shadow-[var(--shadow-button-primary)] transition-all hover:brightness-105 disabled:opacity-30 ${
-                      isMobileComposer ? 'h-11 w-11 rounded-xl px-0 py-0' : 'w-[112px] px-3 py-1.5'
+                    title={t('common.run')}
+                    className={`flex shrink-0 items-center justify-center rounded-full bg-[image:var(--gradient-btn-primary)] text-[var(--color-btn-primary-fg)] shadow-[var(--shadow-button-primary)] transition-all hover:brightness-105 disabled:opacity-30 ${
+                      isMobileComposer ? 'h-11 w-11' : 'h-9 w-9'
                     }`}
                   >
-                    {!isMobileComposer && t('common.run')}
-                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                    <ArrowUp className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {!isMobileComposer && (
-              <RepositoryLaunchControls
-                workDir={workDir}
-                onWorkDirChange={handleWorkDirChange}
-                branch={selectedBranch}
-                onBranchChange={setSelectedBranch}
-                useWorktree={useWorktree}
-                onUseWorktreeChange={setUseWorktree}
-                onLaunchReadyChange={setRepositoryLaunchReady}
-                disabled={isSubmitting}
-                placement="composer"
-              />
-            )}
           </div>
 
           {isMobileComposer && (

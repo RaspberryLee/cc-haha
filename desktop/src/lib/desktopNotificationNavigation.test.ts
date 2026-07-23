@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { openDesktopNotificationTarget } from './desktopNotificationNavigation'
-import { SCHEDULED_TAB_ID, useTabStore } from '../stores/tabStore'
+import { useTabStore } from '../stores/tabStore'
 import { useChatStore } from '../stores/chatStore'
 import { useSessionStore } from '../stores/sessionStore'
 
@@ -64,10 +64,9 @@ describe('desktopNotificationNavigation', () => {
 
     openDesktopNotificationTarget({ type: 'scheduled' })
 
-    expect(useTabStore.getState().tabs).toEqual([
-      { sessionId: SCHEDULED_TAB_ID, title: 'Scheduled Tasks', type: 'scheduled', status: 'idle' },
-    ])
-    expect(useTabStore.getState().activeTabId).toBe(SCHEDULED_TAB_ID)
+    expect(useTabStore.getState().tabs).toEqual([])
+    expect(useTabStore.getState().activeTabId).toBeNull()
+    expect(useTabStore.getState().activeSurface).toBe('scheduled')
     expect(connectToSession).not.toHaveBeenCalled()
   })
 })

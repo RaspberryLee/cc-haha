@@ -373,7 +373,7 @@ describe('Settings > General tab', () => {
   it('shows WebFetch preflight toggle enabled by default', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const toggle = screen.getByLabelText('Skip WebFetch domain preflight')
     expect(toggle).toBeChecked()
@@ -382,7 +382,7 @@ describe('Settings > General tab', () => {
   it('keeps the selected settings tab when returning to Settings', () => {
     const { unmount } = render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(screen.getByLabelText('Skip WebFetch domain preflight')).toBeInTheDocument()
 
     unmount()
@@ -394,7 +394,7 @@ describe('Settings > General tab', () => {
   it('offers the pure white appearance theme', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     const pureWhite = screen.getByRole('button', { name: 'Pure White' })
     const warmClassic = screen.getByRole('button', { name: 'Warm Classic' })
     const dark = screen.getByRole('button', { name: 'Dark' })
@@ -410,7 +410,7 @@ describe('Settings > General tab', () => {
     useSettingsStore.setState({ theme: 'white' })
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     expect(screen.getByRole('button', { name: 'Pure White' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Warm Classic' })).toHaveAttribute('aria-pressed', 'false')
@@ -419,7 +419,7 @@ describe('Settings > General tab', () => {
   it('keeps UI zoom below system notifications because it is a secondary setting', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const notificationsHeading = screen.getByRole('heading', { name: 'System Notifications' })
     const uiZoomHeading = screen.getByRole('heading', { name: 'UI Zoom' })
@@ -434,7 +434,7 @@ describe('Settings > General tab', () => {
   it('lets users choose Ctrl or Command Enter as the chat send shortcut', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     fireEvent.click(screen.getByRole('button', { name: /Ctrl\/Cmd\+Enter sends/i }))
 
     await waitFor(() => {
@@ -446,7 +446,7 @@ describe('Settings > General tab', () => {
   it('saves provider network timeout and manual proxy from General settings', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(screen.getByRole('button', { name: /Direct connection/i })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: /System proxy/i })).toBeInTheDocument()
 
@@ -489,7 +489,7 @@ describe('Settings > General tab', () => {
   it('validates typed provider network timeout and supports precise step controls', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     const timeoutInput = screen.getByLabelText('AI request timeout')
     const saveButton = screen.getAllByRole('button', { name: 'Save' })[0]!
 
@@ -510,7 +510,7 @@ describe('Settings > General tab', () => {
   it('keeps data storage at the bottom of General settings', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const webSearchHeading = screen.getByRole('heading', { name: 'WebSearch' })
     const storageHeading = screen.getByRole('heading', { name: 'Data Storage Location' })
@@ -522,7 +522,7 @@ describe('Settings > General tab', () => {
   it('lets desktop users choose a custom data directory and relaunch immediately', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     fireEvent.click(screen.getByRole('button', { name: 'Choose Folder' }))
 
     await waitFor(() => {
@@ -552,7 +552,7 @@ describe('Settings > General tab', () => {
 
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     fireEvent.click(screen.getByRole('button', { name: /Use system directory/ }))
 
     expect(screen.getByText(/Data in the custom directory is not deleted/)).toBeInTheDocument()
@@ -568,7 +568,7 @@ describe('Settings > General tab', () => {
   it('requires an explicit custom directory and exposes no third default-custom choice', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     const input = screen.getByLabelText('Custom data directory')
 
     fireEvent.change(input, { target: { value: '' } })
@@ -586,7 +586,7 @@ describe('Settings > General tab', () => {
 
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     fireEvent.click(screen.getByRole('button', { name: 'Choose Folder' }))
 
     expect(await screen.findByText('Could not open the folder picker. Paste the folder path manually.')).toBeInTheDocument()
@@ -604,7 +604,7 @@ describe('Settings > General tab', () => {
 
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(screen.getByText(/The current directory is controlled by the CLAUDE_CONFIG_DIR environment variable/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /Use system directory/ }))
@@ -619,7 +619,7 @@ describe('Settings > General tab', () => {
   it('keeps mode switch confirmation cancelable before restart starts', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     fireEvent.change(screen.getByLabelText('Custom data directory'), { target: { value: '/Users/test/custom-data' } })
     fireEvent.click(screen.getByRole('button', { name: 'Use This Folder and Restart' }))
     expect(screen.getByText('Switch data storage location?')).toBeInTheDocument()
@@ -637,7 +637,7 @@ describe('Settings > General tab', () => {
 
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     fireEvent.change(screen.getByLabelText('Custom data directory'), { target: { value: '/Users/test/custom-data' } })
     fireEvent.click(screen.getByRole('button', { name: 'Use This Folder and Restart' }))
     fireEvent.click(screen.getByRole('button', { name: 'Save and Restart' }))
@@ -651,7 +651,7 @@ describe('Settings > General tab', () => {
 
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     expect(screen.getByText('The storage change has been saved. Restart the app for the new data directory to take effect.')).toBeInTheDocument()
   })
@@ -659,7 +659,7 @@ describe('Settings > General tab', () => {
   it('previews UI zoom while dragging and applies it once on release', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(screen.getByText('Shortcuts are faster:')).toBeInTheDocument()
     expect(screen.getByText('macOS')).toBeInTheDocument()
     expect(screen.getByText('Windows / Linux')).toBeInTheDocument()
@@ -700,7 +700,7 @@ describe('Settings > General tab', () => {
   it('updates the UI zoom slider when shortcut zoom changes the shared setting while Settings is open', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const slider = screen.getByLabelText('UI Zoom')
 
@@ -742,7 +742,7 @@ describe('Settings > General tab', () => {
   it('lets the user disable WebFetch preflight skipping', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const toggle = screen.getByLabelText('Skip WebFetch domain preflight')
     fireEvent.click(toggle)
@@ -753,7 +753,7 @@ describe('Settings > General tab', () => {
   it('lets the user disable thinking mode for new sessions', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const toggle = screen.getByLabelText('Enable thinking mode')
     expect(toggle).toBeChecked()
@@ -765,7 +765,7 @@ describe('Settings > General tab', () => {
   it('lets the user choose a default permission mode for new sessions', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     await act(async () => {
       await Promise.resolve()
     })
@@ -784,7 +784,7 @@ describe('Settings > General tab', () => {
   it('confirms first use before saving Auto as the new-session default', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     await act(async () => {
       await Promise.resolve()
     })
@@ -807,7 +807,7 @@ describe('Settings > General tab', () => {
   it('keeps Auto-dream disabled by default and confirms before enabling it', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const toggle = screen.getByLabelText('Enable Auto-dream')
     expect(toggle).not.toBeChecked()
@@ -830,7 +830,7 @@ describe('Settings > General tab', () => {
     useSettingsStore.setState({ autoDreamEnabled: true })
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     await act(async () => {
       fireEvent.click(screen.getByLabelText('Enable Auto-dream'))
     })
@@ -842,7 +842,7 @@ describe('Settings > General tab', () => {
   it('keeps General checkbox inputs anchored inside their visible rows', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     for (const label of [
       'Enable thinking mode',
@@ -863,7 +863,7 @@ describe('Settings > General tab', () => {
   it('lets the user disable Agent Trace collection without leaving General settings', async () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(screen.getByLabelText('Collect agent traces')).toBeChecked()
 
     await act(async () => {
@@ -879,7 +879,7 @@ describe('Settings > General tab', () => {
   it('uses the shared dropdown for response language', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     expect(screen.queryByRole('combobox', { name: 'Response Language' })).not.toBeInTheDocument()
     expect(screen.queryByRole('radiogroup', { name: 'Response Language' })).not.toBeInTheDocument()
@@ -895,7 +895,7 @@ describe('Settings > General tab', () => {
   it('lets the user disable desktop system notifications', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     const toggle = screen.getByLabelText('Enable system notifications')
     expect(toggle).toBeChecked()
@@ -909,7 +909,7 @@ describe('Settings > General tab', () => {
     useSettingsStore.setState({ desktopNotificationsEnabled: false })
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     await act(async () => {
       fireEvent.click(screen.getByLabelText('Enable system notifications'))
     })
@@ -929,7 +929,7 @@ describe('Settings > General tab', () => {
     desktopNotificationsMock.getDesktopNotificationPlatform.mockReturnValue('win32')
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     await act(async () => {
       fireEvent.click(screen.getByLabelText('Enable system notifications'))
     })
@@ -947,7 +947,7 @@ describe('Settings > General tab', () => {
     desktopNotificationsMock.requestDesktopNotificationPermission.mockResolvedValue('denied')
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     await act(async () => {
       fireEvent.click(screen.getByLabelText('Enable system notifications'))
     })
@@ -967,10 +967,10 @@ describe('Settings > General tab', () => {
   it('moves H5 access out of General into its own Settings tab', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
     expect(screen.queryByRole('region', { name: 'H5 Access' })).not.toBeInTheDocument()
 
-    const generalTab = screen.getByText('General')
+    const generalTab = screen.getByRole('button', { name: 'General' })
     const h5Tab = screen.getByText('H5 Access')
     expect((generalTab.compareDocumentPosition(h5Tab) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true)
     fireEvent.click(h5Tab)
@@ -1507,7 +1507,7 @@ describe('Settings > General tab', () => {
   it('saves WebSearch fallback provider settings', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Tavily' }))
     fireEvent.change(screen.getByLabelText('Tavily API key'), {
@@ -1526,7 +1526,7 @@ describe('Settings > General tab', () => {
   it('links to WebSearch provider API key dashboards', () => {
     render(<Settings />)
 
-    fireEvent.click(screen.getByText('General'))
+    fireEvent.click(screen.getByRole('button', { name: 'General' }))
 
     expect(screen.getByRole('link', { name: 'Get Tavily API key' })).toHaveAttribute(
       'href',

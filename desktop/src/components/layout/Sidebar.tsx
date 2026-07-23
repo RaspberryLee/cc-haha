@@ -76,6 +76,7 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
   const openModal = useUIStore((s) => s.openModal)
   const closeModal = useUIStore((s) => s.closeModal)
   const activeTabId = useTabStore((s) => s.activeTabId)
+  const activeSurface = useTabStore((s) => s.activeSurface)
   const tabs = useTabStore((s) => s.tabs)
   const chatSessions = useChatStore((s) => s.sessions)
   const closeTab = useTabStore((s) => s.closeTab)
@@ -653,37 +654,37 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
 
   return (
     <aside
-      className="sidebar-panel relative h-full flex flex-col bg-[var(--color-surface-sidebar)] border-r border-[var(--color-border)] select-none"
+      className="sidebar-panel relative h-full flex flex-col bg-[var(--color-surface-sidebar)] border-r border-transparent select-none"
       data-state={expanded ? 'open' : 'closed'}
       aria-label="Sidebar"
     >
       <div
         data-testid="sidebar-title-region"
         data-desktop-drag-region
-        className={`px-3 pb-2 ${isDesktopRuntime && !isWindows ? 'pt-[44px]' : 'pt-3'}`}
+        className={`px-3 pb-3 ${isDesktopRuntime && !isWindows ? 'pt-[44px]' : 'pt-3'}`}
       >
         <div className={`flex ${expanded ? 'items-center justify-between gap-3' : 'flex-col items-center gap-2'}`}>
-          <div className={`flex min-w-0 items-center ${expanded ? 'gap-2.5' : 'justify-center'}`}>
-            <img src={publicAssetPath('app-icon.png')} alt="" className="h-8 w-8 flex-shrink-0" />
+          <div className={`flex min-w-0 items-center ${expanded ? 'gap-2' : 'justify-center'}`}>
+            <img src={publicAssetPath('app-icon.png')} alt="" className="h-6 w-6 flex-shrink-0" />
             <span
-              className={`sidebar-copy ${expanded ? 'sidebar-copy--visible' : 'sidebar-copy--hidden'} text-[13px] font-semibold tracking-tight text-[var(--color-text-primary)]`}
+              className={`sidebar-copy ${expanded ? 'sidebar-copy--visible' : 'sidebar-copy--hidden'} truncate text-[14px] font-bold tracking-tight text-[var(--color-text-primary)]`}
               style={{ fontFamily: 'var(--font-headline)' }}
             >
-              Claude Code <span className="text-[var(--color-primary-container)]">Haha</span>
+              Claude Code Haha
             </span>
           </div>
           <div className={`flex items-center ${expanded ? 'gap-1.5' : 'flex-col gap-2'}`}>
-            <a
-              href="https://github.com/NanmiCoder/cc-haha"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`sidebar-copy ${expanded ? 'sidebar-copy--visible' : 'sidebar-copy--hidden'} inline-flex items-center justify-center rounded-md p-1 text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]`}
-              title="GitHub"
-              tabIndex={expanded ? undefined : -1}
+            <button
+              type="button"
+              onClick={() => openModal('globalSearch')}
+              className={`sidebar-copy ${expanded ? 'sidebar-copy--visible' : 'sidebar-copy--hidden'} inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)]`}
+              aria-label={t('search.global.trigger')}
               aria-hidden={!expanded}
+              tabIndex={expanded ? undefined : -1}
+              title={t('search.global.trigger')}
             >
-              <GitHubIcon />
-            </a>
+              <SearchIcon />
+            </button>
             {isMobile ? (
               <button
                 type="button"
@@ -729,7 +730,7 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
         </NavItem>
         {!isMobile && (
           <NavItem
-            active={activeTabId === SCHEDULED_TAB_ID}
+            active={activeSurface === 'scheduled'}
             collapsed={!expanded}
             label={t('sidebar.scheduled')}
             touchFriendly={isMobile}
@@ -744,7 +745,7 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
         )}
         {!isMobile && (
           <NavItem
-            active={activeTabId === MARKET_TAB_ID}
+            active={activeSurface === 'market'}
             collapsed={!expanded}
             label={t('sidebar.market')}
             touchFriendly={isMobile}
@@ -766,12 +767,13 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
             className="sidebar-section sidebar-section--visible relative z-20 flex-none px-3 pb-2"
             style={{ overflow: 'visible' }}
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-end gap-1">
               <button
                 type="button"
                 onClick={() => openModal('globalSearch')}
-                className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-[14px] border border-[var(--color-sidebar-search-border)] bg-[var(--color-sidebar-search-bg)] pl-3 pr-2 text-left text-[13px] text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-sidebar-item-hover)] focus-visible:border-[var(--color-border-focus)] focus-visible:outline-none"
-                aria-label={t('search.global.trigger')}
+                className="hidden"
+                aria-hidden="true"
+                tabIndex={-1}
                 title={t('search.global.trigger')}
               >
                 <span className="pointer-events-none flex shrink-0 items-center text-[var(--color-text-tertiary)]">
@@ -783,7 +785,7 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
               <button
                 type="button"
                 onClick={() => void refreshSessionsNow()}
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border border-[var(--color-sidebar-search-border)] bg-[var(--color-sidebar-search-bg)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-default disabled:opacity-65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]"
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent text-[var(--color-text-tertiary)] transition-colors hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-default disabled:opacity-65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)]"
                 aria-label={t('sidebar.refreshSessions')}
                 title={t('sidebar.refreshSessions')}
               >
@@ -792,10 +794,10 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
               <button
                 type="button"
                 onClick={isBatchMode ? handleExitBatchMode : enterBatchMode}
-                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)] ${
+                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-border-focus)] ${
                   isBatchMode
                     ? 'border-[var(--color-brand)] bg-[var(--color-sidebar-item-active)] text-[var(--color-brand)]'
-                    : 'border-[var(--color-sidebar-search-border)] bg-[var(--color-sidebar-search-bg)] text-[var(--color-text-secondary)] hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)]'
+                    : 'border-transparent bg-transparent text-[var(--color-text-tertiary)] hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)]'
                 }`}
                 aria-label={isBatchMode ? t('sidebar.batchExit') : t('sidebar.batchManage')}
                 title={isBatchMode ? t('sidebar.batchExit') : t('sidebar.batchManage')}
@@ -1074,7 +1076,7 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
                                     group/session w-full rounded-lg px-2.5 ${isMobile ? 'py-3' : 'py-1.5'} text-left text-[13px] transition-[background,filter,color] duration-200
                                     ${selectedSessionIds.has(session.id)
                                       ? 'sidebar-session-row--selected bg-[var(--color-sidebar-item-active)] text-[var(--color-text-primary)]'
-                                      : session.id === activeTabId
+                                      : !activeSurface && session.id === activeTabId
                                       ? 'sidebar-session-row--active bg-[var(--color-sidebar-item-active)] text-[var(--color-text-primary)]'
                                       : 'sidebar-session-row--idle text-[var(--color-text-secondary)] hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)]'
                                     }
@@ -1153,7 +1155,7 @@ export function Sidebar({ isMobile = false, onRequestClose }: SidebarProps) {
           className={`sidebar-settings-dock absolute bottom-0 left-0 right-0 border-t border-[var(--color-border)] p-3 ${expanded ? '' : 'flex justify-center'}`}
         >
           <NavItem
-            active={activeTabId === SETTINGS_TAB_ID}
+            active={activeSurface === 'settings'}
             collapsed={!expanded}
             label={t('sidebar.settings')}
             touchFriendly={isMobile}
@@ -2010,7 +2012,7 @@ function NavItem({
       title={collapsed ? label : undefined}
       className={`
         flex items-center transition-colors duration-200
-        ${collapsed ? 'h-10 w-10 justify-center rounded-[var(--radius-md)] px-0 py-0' : `w-full gap-2.5 rounded-[12px] px-3 ${touchFriendly ? 'py-3' : 'py-2.5'} text-sm`}
+        ${collapsed ? 'h-10 w-10 justify-center rounded-lg px-0 py-0' : `w-full gap-2.5 rounded-lg px-2.5 ${touchFriendly ? 'py-3' : 'py-2'} text-[13px]`}
         ${active
           ? 'bg-[var(--color-sidebar-item-active)] font-medium text-[var(--color-text-primary)]'
           : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-sidebar-item-hover)] hover:text-[var(--color-text-primary)]'
@@ -2046,7 +2048,7 @@ function formatRelativeTime(
   return new Intl.DateTimeFormat(undefined, { month: 'numeric', day: 'numeric' }).format(date)
 }
 
-function GitHubIcon() {
+export function GitHubIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />

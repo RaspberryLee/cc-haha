@@ -264,6 +264,21 @@ describe('EmptySession', () => {
     expect(screen.getByTestId('empty-session-composer-panel')).toHaveClass('rounded-2xl')
   })
 
+  it('fills and focuses the composer when a starter action is selected', async () => {
+    render(<EmptySession />)
+    expect(screen.getByAltText('Claude Code Haha')).not.toHaveClass('grayscale', 'opacity-55')
+
+    await waitFor(() => {
+      expect(mocks.listSkills).toHaveBeenCalledTimes(1)
+    })
+
+    const input = screen.getByRole('textbox')
+    fireEvent.click(screen.getByRole('button', { name: 'Explore and understand code' }))
+
+    expect(input).toHaveValue('Explore this codebase and explain its architecture.')
+    expect(input).toHaveFocus()
+  })
+
   it('refreshes empty-session slash commands after plugin reloads', async () => {
     mocks.listSkills
       .mockResolvedValueOnce({ skills: [] })
@@ -437,7 +452,7 @@ describe('EmptySession', () => {
     render(<EmptySession />)
 
     const panel = screen.getByTestId('empty-session-composer-panel')
-    expect(panel).toHaveClass('rounded-xl', 'p-0')
+    expect(panel).toHaveClass('rounded-[22px]', 'p-0')
     expect(panel).not.toHaveClass('rounded-b-none')
 
     fireEvent.click(screen.getByRole('button', { name: 'Pick project' }))

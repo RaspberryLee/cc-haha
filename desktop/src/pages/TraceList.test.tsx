@@ -89,7 +89,7 @@ async function findTraceRow(title: RegExp) {
 describe('TraceList', () => {
   beforeEach(() => {
     useSettingsStore.setState({ locale: 'en' })
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     vi.mocked(tracesApi.list).mockResolvedValue(traceList)
     vi.mocked(tracesApi.deleteSession).mockResolvedValue({ sessionId: 'session-trace-list', deleted: true })
   })
@@ -97,7 +97,7 @@ describe('TraceList', () => {
   afterEach(() => {
     cleanup()
     vi.clearAllMocks()
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useSettingsStore.setState({ locale: 'en' })
   })
 
@@ -140,7 +140,7 @@ describe('TraceList', () => {
     expect(useTabStore.getState().activeTabId).toBe('__trace__session-trace-list')
     expect(useTabStore.getState().tabs.find((tab) => tab.type === 'trace')?.traceSessionId).toBe('session-trace-list')
 
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     fireEvent.keyDown(within(await findTraceRow(/Debug stuck agent/)).getByRole('button', { name: /Debug stuck agent/ }), { key: 'Enter' })
 
     expect(useTabStore.getState().activeTabId).toBe('__trace__session-trace-list')
@@ -191,8 +191,8 @@ describe('TraceList', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Trace settings' }))
 
-    expect(useTabStore.getState().activeTabId).toBe(SETTINGS_TAB_ID)
-    expect(useTabStore.getState().tabs.find((tab) => tab.sessionId === SETTINGS_TAB_ID)?.type).toBe('settings')
+    expect(useTabStore.getState().activeSurface).toBe('settings')
+    expect(useTabStore.getState().tabs.some((tab) => tab.sessionId === SETTINGS_TAB_ID)).toBe(false)
   })
 
   it('loads additional trace pages instead of fetching all rows at once', async () => {

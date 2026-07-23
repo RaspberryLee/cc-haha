@@ -200,7 +200,7 @@ describe('TabBar', () => {
     const { useCLITaskStore } = await import('../../stores/cliTaskStore')
     const { useTeamStore } = await import('../../stores/teamStore')
 
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useChatStore.setState({
       sessions: {},
     } as Partial<ReturnType<typeof useChatStore.getState>>)
@@ -521,13 +521,14 @@ describe('TabBar', () => {
     expect(screen.queryByTestId('session-activity-badge')).not.toBeInTheDocument()
   })
 
-  it('does not show the activity button for settings tabs', async () => {
+  it('does not show task activity controls while Settings is open', async () => {
     const { TabBar } = await import('./TabBar')
-    const { SETTINGS_TAB_ID, useTabStore } = await import('../../stores/tabStore')
+    const { useTabStore } = await import('../../stores/tabStore')
 
     useTabStore.setState({
-      tabs: [{ sessionId: SETTINGS_TAB_ID, title: 'Settings', type: 'settings', status: 'idle' }],
-      activeTabId: SETTINGS_TAB_ID,
+      tabs: [{ sessionId: 'session-1', title: 'Chat', type: 'session', status: 'idle' }],
+      activeTabId: 'session-1',
+      activeSurface: 'settings',
     })
 
     await act(async () => {
@@ -535,6 +536,7 @@ describe('TabBar', () => {
     })
 
     expect(screen.queryByRole('button', { name: /activity/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Open Terminal' })).not.toBeInTheDocument()
   })
 
   it('shows current-session CLI tasks without a numeric activity badge', async () => {
@@ -785,7 +787,7 @@ describe('TabBar', () => {
     const { TabBar } = await import('./TabBar')
     const { useTabStore } = await import('../../stores/tabStore')
 
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
 
     await act(async () => {
       render(<TabBar />)
@@ -799,6 +801,34 @@ describe('TabBar', () => {
     expect(screen.queryByTestId('window-controls')).not.toBeInTheDocument()
   })
 
+  it('keeps work tabs available but inactive while an app surface is open', async () => {
+    const { TabBar } = await import('./TabBar')
+    const { useTabStore } = await import('../../stores/tabStore')
+    const { useChatStore } = await import('../../stores/chatStore')
+
+    useTabStore.setState({
+      tabs: [{ sessionId: 'tab-1', title: 'Project task', type: 'session', status: 'idle' }],
+      activeTabId: 'tab-1',
+      activeSurface: 'market',
+    })
+    useChatStore.setState({
+      sessions: {},
+      disconnectSession: vi.fn(),
+    } as Partial<ReturnType<typeof useChatStore.getState>>)
+
+    await act(async () => {
+      render(<TabBar />)
+    })
+
+    const tab = screen.getByText('Project task').closest('.tab-bar-interactive')
+    expect(tab).toBeInTheDocument()
+    expect(tab).not.toHaveClass('bg-[var(--color-surface)]')
+    expect(screen.queryByRole('button', { name: 'Open Terminal' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('window-controls')).toBeInTheDocument()
+
+    fireEvent.click(tab!)
+    expect(useTabStore.getState().activeSurface).toBeNull()
+  })
   it('marks the tab bar as a native drag region', async () => {
     const { TabBar } = await import('./TabBar')
     const { useTabStore } = await import('../../stores/tabStore')
@@ -1264,7 +1294,7 @@ describe('TabBar', () => {
     expect(useTabStore.getState().tabs).toEqual([])
   })
 
-  it('closes the market tab from the close button without disconnecting chat sessions', async () => {
+  it('does not render a standalone market surface as a closable work tab', async () => {
     const { TabBar } = await import('./TabBar')
     const { MARKET_TAB_ID, useTabStore } = await import('../../stores/tabStore')
     const { useChatStore } = await import('../../stores/chatStore')
@@ -1274,9 +1304,9 @@ describe('TabBar', () => {
     useTabStore.setState({
       tabs: [
         { sessionId: 'tab-1', title: 'First Session', type: 'session', status: 'idle' },
-        { sessionId: MARKET_TAB_ID, title: 'Market', type: 'market', status: 'idle' },
       ],
-      activeTabId: MARKET_TAB_ID,
+      activeTabId: 'tab-1',
+      activeSurface: 'market',
     })
     useChatStore.setState({
       sessions: {},
@@ -1287,11 +1317,11 @@ describe('TabBar', () => {
       render(<TabBar />)
     })
 
-    fireEvent.click(screen.getByLabelText('Close Market'))
-
+    expect(screen.queryByLabelText('Close Market')).not.toBeInTheDocument()
     expect(disconnectSession).not.toHaveBeenCalled()
     expect(useTabStore.getState().tabs.map((tab) => tab.sessionId)).toEqual(['tab-1'])
     expect(useTabStore.getState().activeTabId).toBe('tab-1')
+    expect(MARKET_TAB_ID).toBe('__market__')
   })
 
   it('opens the bottom terminal panel from the toolbar for an active session', async () => {
@@ -1500,17 +1530,17 @@ describe('TabBar', () => {
     expect(useActivityPanelStore.getState().isOpen(tabId)).toBe(false)
   })
 
-  it('treats the market tab as a non-session toolbar target', async () => {
+  it('hides task tools while the standalone market surface is open', async () => {
     const { TabBar } = await import('./TabBar')
-    const { MARKET_TAB_ID, useTabStore } = await import('../../stores/tabStore')
+    const { useTabStore } = await import('../../stores/tabStore')
     const { useChatStore } = await import('../../stores/chatStore')
-    const { useTerminalPanelStore } = await import('../../stores/terminalPanelStore')
 
     useTabStore.setState({
       tabs: [
-        { sessionId: MARKET_TAB_ID, title: 'Market', type: 'market', status: 'idle' },
+        { sessionId: 'tab-1', title: 'First Session', type: 'session', status: 'idle' },
       ],
-      activeTabId: MARKET_TAB_ID,
+      activeTabId: 'tab-1',
+      activeSurface: 'market',
     })
     useChatStore.setState({
       sessions: {},
@@ -1523,13 +1553,7 @@ describe('TabBar', () => {
 
     expect(screen.queryByTestId('open-project-menu')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Show Workspace' })).not.toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Open Terminal' }))
-
-    const terminalTabs = useTabStore.getState().tabs.filter((tab) => tab.type === 'terminal')
-    expect(terminalTabs).toHaveLength(1)
-    expect(useTabStore.getState().activeTabId).toBe(terminalTabs[0]?.sessionId)
-    expect(useTerminalPanelStore.getState().isPanelOpen(MARKET_TAB_ID)).toBe(false)
+    expect(screen.queryByRole('button', { name: 'Open Terminal' })).not.toBeInTheDocument()
   })
 
   it('clears session panel state when closing a session tab', async () => {

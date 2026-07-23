@@ -653,7 +653,7 @@
   --color-warning: #B54708;
   --color-warning-container: #FEF0C7;
 
-  --color-surface-sidebar: #F4F4F4;
+  --color-surface-sidebar: #F7F3F4;
   --color-surface-hover: #F2F2F2;
   --color-surface-selected: #EAEAEA;
   --color-memory-accent: #0F766E;
@@ -1113,9 +1113,25 @@ button, input, textarea, select, a, [role="button"] {
   overflow-x: hidden;
 }
 
+
+.app-main-surface {
+  margin-top: 8px;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+.app-shell--mobile .app-main-surface {
+  margin-top: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .app-shell-backdrop {
   background: var(--color-overlay-scrim);
 }
+
 
 .skill-market-detail-scrim {
   background: var(--color-modal-scrim);

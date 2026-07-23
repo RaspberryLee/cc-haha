@@ -14,24 +14,27 @@ import { previewBridge } from '../../lib/previewBridge'
 
 export function ContentRouter() {
   const activeTabId = useTabStore((s) => s.activeTabId)
+  const activeSurface = useTabStore((s) => s.activeSurface)
   const tabs = useTabStore((s) => s.tabs)
   const activeTabType = tabs.find((t) => t.sessionId === activeTabId)?.type
   const terminalTabs = tabs.filter((tab) => tab.type === 'terminal')
 
   useEffect(() => {
-    if (activeTabType === 'session' || activeTabType === 'workbench') return
+    if (!activeSurface && (activeTabType === 'session' || activeTabType === 'workbench')) return
     void previewBridge.close()
-  }, [activeTabType])
+  }, [activeSurface, activeTabType])
 
   let page: ReactNode = null
-  if (!activeTabId || !activeTabType) {
-    page = <EmptySession />
-  } else if (activeTabType === 'settings') {
+  if (activeSurface === 'settings') {
     page = <Settings />
-  } else if (activeTabType === 'scheduled') {
+  } else if (activeSurface === 'scheduled') {
     page = <ScheduledTasks />
-  } else if (activeTabType === 'market') {
+  } else if (activeSurface === 'market') {
     page = <Market />
+  } else if (activeSurface === 'traces') {
+    page = <TraceList />
+  } else if (!activeTabId || !activeTabType) {
+    page = <EmptySession />
   } else if (activeTabType === 'trace') {
     const traceSessionId = tabs.find((t) => t.sessionId === activeTabId)?.traceSessionId
     page = traceSessionId ? <TraceSession sessionId={traceSessionId} /> : <EmptySession />
@@ -66,7 +69,7 @@ export function ContentRouter() {
       )}
       {terminalTabs.map((tab) => {
         const active = tab.sessionId === activeTabId
-        const visible = activeTabType === 'terminal' && active
+        const visible = !activeSurface && activeTabType === 'terminal' && active
         return (
           <div
             key={tab.sessionId}

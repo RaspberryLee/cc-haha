@@ -16,7 +16,7 @@ export const WORKBENCH_TAB_PREFIX = '__workbench__'
 export const SUBAGENT_TAB_PREFIX = '__subagent__'
 
 export type TabType = 'session' | 'settings' | 'scheduled' | 'market' | 'terminal' | 'trace' | 'traces' | 'workbench' | 'subagent'
-type PersistentSpecialTabType = 'settings' | 'scheduled' | 'market' | 'traces'
+export type AppSurface = 'settings' | 'scheduled' | 'market' | 'traces'
 
 export type Tab = {
   sessionId: string
@@ -42,11 +42,13 @@ export type WorkbenchTabOrigin = {
 type TabPersistence = {
   openTabs: Array<{ sessionId: string; title: string; type?: TabType; traceSessionId?: string }>
   activeTabId: string | null
+  activeSurface?: AppSurface | null
 }
 
 type TabStore = {
   tabs: Tab[]
   activeTabId: string | null
+  activeSurface: AppSurface | null
 
   openTab: (sessionId: string, title: string, type?: TabType) => void
   openTracesTab: (title?: string) => string
@@ -66,14 +68,14 @@ type TabStore = {
   restoreTabs: () => Promise<void>
 }
 
-const PERSISTENT_SPECIAL_TAB_IDS: Record<PersistentSpecialTabType, string> = {
+const APP_SURFACE_IDS: Record<AppSurface, string> = {
   settings: SETTINGS_TAB_ID,
   scheduled: SCHEDULED_TAB_ID,
   market: MARKET_TAB_ID,
   traces: TRACE_LIST_TAB_ID,
 }
 
-function getPersistentSpecialTabType(tab: Pick<Tab, 'sessionId'> & { type?: TabType }): PersistentSpecialTabType | null {
+function getAppSurface(tab: Pick<Tab, 'sessionId'> & { type?: TabType }): AppSurface | null {
   if (tab.sessionId === SETTINGS_TAB_ID) return 'settings'
   if (tab.sessionId === SCHEDULED_TAB_ID) return 'scheduled'
   if (tab.sessionId === MARKET_TAB_ID) return 'market'
@@ -87,8 +89,21 @@ function getPersistentSpecialTabType(tab: Pick<Tab, 'sessionId'> & { type?: TabT
 export const useTabStore = create<TabStore>((set, get) => ({
   tabs: [],
   activeTabId: null,
+  activeSurface: null,
 
   openTab: (sessionId, title, type) => {
+    const appSurface = getAppSurface({ sessionId, type })
+    if (appSurface) {
+      const workTabs = get().tabs.filter((tab) => !getAppSurface(tab))
+      const currentActiveTabId = get().activeTabId
+      const activeTabId = currentActiveTabId && workTabs.some((tab) => tab.sessionId === currentActiveTabId)
+        ? currentActiveTabId
+        : (workTabs[0]?.sessionId ?? null)
+      set({ tabs: workTabs, activeTabId, activeSurface: appSurface })
+      get().saveTabs()
+      return
+    }
+
     const { tabs } = get()
     const existing = tabs.find((t) => t.sessionId === sessionId)
     if (existing) {
@@ -103,35 +118,20 @@ export const useTabStore = create<TabStore>((set, get) => ({
             : tab,
         ),
         activeTabId: sessionId,
+        activeSurface: null,
       })
     } else {
       set({
         tabs: [...tabs, { sessionId, title, type: type ?? 'session', status: 'idle' }],
         activeTabId: sessionId,
+        activeSurface: null,
       })
     }
     get().saveTabs()
   },
 
   openTracesTab: (title = 'Traces') => {
-    const { tabs } = get()
-    const existing = tabs.find((tab) => tab.sessionId === TRACE_LIST_TAB_ID)
-    if (existing) {
-      set({
-        tabs: tabs.map((tab) => (
-          tab.sessionId === TRACE_LIST_TAB_ID
-            ? { ...tab, title, type: 'traces' }
-            : tab
-        )),
-        activeTabId: TRACE_LIST_TAB_ID,
-      })
-    } else {
-      set({
-        tabs: [...tabs, { sessionId: TRACE_LIST_TAB_ID, title, type: 'traces', status: 'idle' }],
-        activeTabId: TRACE_LIST_TAB_ID,
-      })
-    }
-    get().saveTabs()
+    get().openTab(TRACE_LIST_TAB_ID, title, 'traces')
     return TRACE_LIST_TAB_ID
   },
 
@@ -147,11 +147,13 @@ export const useTabStore = create<TabStore>((set, get) => ({
             : tab
         )),
         activeTabId: traceTabId,
+        activeSurface: null,
       })
     } else {
       set({
         tabs: [...tabs, { sessionId: traceTabId, title, type: 'trace', status: 'idle', traceSessionId: sessionId }],
         activeTabId: traceTabId,
+        activeSurface: null,
       })
     }
     get().saveTabs()
@@ -173,6 +175,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
     set({
       tabs: [...tabs, { sessionId, title: `Terminal ${nextIndex}`, type: 'terminal', status: 'idle', terminalCwd: cwd, terminalRuntimeId }],
       activeTabId: sessionId,
+      activeSurface: null,
     })
     get().saveTabs()
     return sessionId
@@ -197,11 +200,13 @@ export const useTabStore = create<TabStore>((set, get) => ({
       set({
         tabs: tabs.map((current) => current.sessionId === tabId ? tab : current),
         activeTabId: tabId,
+        activeSurface: null,
       })
     } else {
       set({
         tabs: [...tabs, tab],
         activeTabId: tabId,
+        activeSurface: null,
       })
     }
     get().saveTabs()
@@ -236,12 +241,21 @@ export const useTabStore = create<TabStore>((set, get) => ({
         ? tabs.map((current) => current.sessionId === tabId ? tab : current)
         : [...tabs, tab],
       activeTabId: tabId,
+      activeSurface: null,
     })
     get().saveTabs()
     return tabId
   },
 
   closeTab: (sessionId) => {
+    const appSurface = getAppSurface({ sessionId })
+    if (appSurface) {
+      if (get().activeSurface === appSurface) {
+        set({ activeSurface: null })
+        get().saveTabs()
+      }
+      return
+    }
     const { tabs, activeTabId } = get()
     const index = tabs.findIndex((t) => t.sessionId === sessionId)
     if (index < 0) return
@@ -269,7 +283,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
   },
 
   setActiveTab: (sessionId) => {
-    set({ activeTabId: sessionId })
+    set({ activeTabId: sessionId, activeSurface: null })
     get().saveTabs()
   },
 
@@ -309,8 +323,13 @@ export const useTabStore = create<TabStore>((set, get) => ({
   },
 
   saveTabs: () => {
-    const { tabs, activeTabId } = get()
-    const persistableTabs = tabs.filter((tab) => tab.type !== 'terminal' && tab.type !== 'workbench' && tab.type !== 'subagent')
+    const { tabs, activeTabId, activeSurface } = get()
+    const persistableTabs = tabs.filter((tab) =>
+      !getAppSurface(tab) &&
+      tab.type !== 'terminal' &&
+      tab.type !== 'workbench' &&
+      tab.type !== 'subagent'
+    )
     const activeTab = tabs.find((tab) => tab.sessionId === activeTabId)
     const persistedActiveTabId = activeTabId && persistableTabs.some((tab) => tab.sessionId === activeTabId)
       ? activeTabId
@@ -325,6 +344,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
         ...(t.traceSessionId ? { traceSessionId: t.traceSessionId } : {}),
       })),
       activeTabId: persistedActiveTabId,
+      ...(activeSurface ? { activeSurface } : {}),
     }
     try {
       localStorage.setItem(TAB_STORAGE_KEY, JSON.stringify(data))
@@ -338,9 +358,25 @@ export const useTabStore = create<TabStore>((set, get) => ({
       if (!raw) return
 
       const data = JSON.parse(raw) as TabPersistence
-      if (!data.openTabs || data.openTabs.length === 0) {
-        set({ tabs: [], activeTabId: null })
+      const legacyActiveSurface = data.activeTabId
+        ? getAppSurface({ sessionId: data.activeTabId })
+        : null
+      const activeSurface = data.activeSurface && APP_SURFACE_IDS[data.activeSurface]
+        ? data.activeSurface
+        : legacyActiveSurface
+      const persistedWorkTabs = Array.isArray(data.openTabs)
+        ? data.openTabs.filter((tab) => !getAppSurface(tab))
+        : []
+
+      if (persistedWorkTabs.length === 0 && !activeSurface) {
+        set({ tabs: [], activeTabId: null, activeSurface: null })
         localStorage.removeItem(TAB_STORAGE_KEY)
+        return
+      }
+
+      if (persistedWorkTabs.length === 0) {
+        set({ tabs: [], activeTabId: null, activeSurface })
+        get().saveTabs()
         return
       }
 
@@ -348,27 +384,21 @@ export const useTabStore = create<TabStore>((set, get) => ({
       const current = get()
       if (
         current.tabs !== restoreStartedWith.tabs ||
-        current.activeTabId !== restoreStartedWith.activeTabId
+        current.activeTabId !== restoreStartedWith.activeTabId ||
+        current.activeSurface !== restoreStartedWith.activeSurface
       ) {
         return
       }
       useSessionRuntimeStore.getState().syncFromSessions(sessions)
       const existingIds = new Set(sessions.map((s) => s.id))
 
-      const validTabs: Tab[] = data.openTabs
+      const validTabs: Tab[] = persistedWorkTabs
         .filter((t) => {
-          // Special tabs are always valid
-          if (getPersistentSpecialTabType(t)) return true
           if (t.type === 'trace') return !!t.traceSessionId && existingIds.has(t.traceSessionId)
           if (t.type === 'terminal') return false
-          // Session tabs must exist on server
           return existingIds.has(t.sessionId)
         })
         .map((t) => {
-          const specialType = getPersistentSpecialTabType(t)
-          if (specialType) {
-            return { sessionId: PERSISTENT_SPECIAL_TAB_IDS[specialType], title: t.title, type: specialType, status: 'idle' as const }
-          }
           if (t.type === 'trace' && t.traceSessionId) {
             const sourceTitle = sessions.find((s) => s.id === t.traceSessionId)?.title || t.title
             return {
@@ -388,8 +418,12 @@ export const useTabStore = create<TabStore>((set, get) => ({
         })
 
       if (validTabs.length === 0) {
-        set({ tabs: [], activeTabId: null })
-        localStorage.removeItem(TAB_STORAGE_KEY)
+        set({ tabs: [], activeTabId: null, activeSurface })
+        if (activeSurface) {
+          get().saveTabs()
+        } else {
+          localStorage.removeItem(TAB_STORAGE_KEY)
+        }
         return
       }
 
@@ -397,7 +431,8 @@ export const useTabStore = create<TabStore>((set, get) => ({
         ? data.activeTabId
         : validTabs[0]!.sessionId
 
-      set({ tabs: validTabs, activeTabId: activeId })
+      set({ tabs: validTabs, activeTabId: activeId, activeSurface })
+      get().saveTabs()
     } catch { /* noop */ }
   },
 }))

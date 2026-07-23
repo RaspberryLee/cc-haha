@@ -93,14 +93,14 @@ describe('sessionStore', () => {
       selectedSessionIds: new Set(),
     })
     useSettingsStore.setState({ permissionMode: 'default' })
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useSessionRuntimeStore.setState({ selections: {} })
   })
 
   afterEach(() => {
     useSessionStore.setState(initialState)
     useSettingsStore.setState({ permissionMode: 'default' })
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
     useSessionRuntimeStore.setState({ selections: {} })
   })
 

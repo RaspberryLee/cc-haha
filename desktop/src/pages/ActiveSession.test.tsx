@@ -90,7 +90,7 @@ afterEach(() => {
   cleanup()
   vi.useRealTimers()
   viewportMocks.isMobile = false
-  useTabStore.setState({ tabs: [], activeTabId: null })
+  useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
   useSessionStore.setState({ sessions: [], activeSessionId: null, isLoading: false, error: null })
   useChatStore.setState({ sessions: {} })
   useSettingsStore.setState({ locale: 'en' })
@@ -1829,6 +1829,62 @@ describe('ActiveSession task polling', () => {
     expect(terminalTab?.terminalCwd).toBe('/tmp/project-root/packages/app')
     expect(terminalTab?.terminalRuntimeId).toBe(`__session_terminal__${sessionId}`)
     expect(useTabStore.getState().activeTabId).toBe(terminalTab?.sessionId)
+  })
+
+
+  it('prefills the active composer from a starter action on a new session', () => {
+    const sessionId = 'starter-session'
+
+    useSessionStore.setState({
+      sessions: [{
+        id: sessionId,
+        title: 'Starter Session',
+        createdAt: '2026-07-21T00:00:00.000Z',
+        modifiedAt: '2026-07-21T00:00:00.000Z',
+        messageCount: 0,
+        projectPath: '/tmp/project-root',
+        workDir: '/tmp/project-root',
+        workDirExists: true,
+      }],
+      activeSessionId: sessionId,
+      isLoading: false,
+      error: null,
+    })
+    useTabStore.setState({
+      tabs: [{ sessionId, title: 'Starter Session', type: 'session', status: 'idle' }],
+      activeTabId: sessionId,
+    })
+    useChatStore.setState({
+      sessions: {
+        [sessionId]: {
+          messages: [],
+          chatState: 'idle',
+          connectionState: 'connected',
+          streamingText: '',
+          streamingToolInput: '',
+          activeToolUseId: null,
+          activeToolName: null,
+          activeThinkingId: null,
+          pendingPermission: null,
+          pendingComputerUsePermission: null,
+          tokenUsage: { input_tokens: 0, output_tokens: 0 },
+          streamingResponseChars: 0,
+          elapsedSeconds: 0,
+          statusVerb: '',
+          slashCommands: [],
+          agentTaskNotifications: {},
+          elapsedTimer: null,
+        },
+      },
+    })
+
+    render(<ActiveSession />)
+    expect(screen.getByAltText('Claude Code Haha')).not.toHaveClass('grayscale', 'opacity-55')
+    fireEvent.click(screen.getByRole('button', { name: 'Explore and understand code' }))
+
+    expect(screen.getByTestId('active-session-starters')).toBeInTheDocument()
+    expect(useChatStore.getState().sessions[sessionId]?.composerPrefill)
+      .toEqual(expect.objectContaining({ text: 'Explore this codebase and explain its architecture.' }))
   })
 
   it('keeps the docked terminal usable on a new empty session', () => {

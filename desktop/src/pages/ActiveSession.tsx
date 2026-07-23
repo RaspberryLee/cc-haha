@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import { Target } from 'lucide-react'
+import { Bug, Hammer, ScanSearch, SearchCode, Target } from 'lucide-react'
 import {
   SCHEDULED_TAB_ID,
   SETTINGS_TAB_ID,
@@ -292,6 +292,7 @@ export function ActiveSession() {
   const activeTabType = useTabStore((s) => s.tabs.find((tab) => tab.sessionId === s.activeTabId)?.type ?? null)
   const sessions = useSessionStore((s) => s.sessions)
   const connectToSession = useChatStore((s) => s.connectToSession)
+  const queueComposerPrefill = useChatStore((s) => s.queueComposerPrefill)
   const stopBackgroundTask = useChatStore((s) => s.stopBackgroundTask)
   const sessionState = useChatStore((s) => activeTabId ? s.sessions[activeTabId] : undefined)
   const pendingComputerUsePermission = sessionState?.pendingComputerUsePermission ?? null
@@ -372,6 +373,40 @@ export function ActiveSession() {
   ])
 
   const t = useTranslation()
+  const starterPrompts = useMemo(() => [
+    {
+      key: 'explore',
+      label: t('empty.starter.explore'),
+      prompt: t('empty.starter.explorePrompt'),
+      icon: SearchCode,
+      color: 'text-blue-500',
+    },
+    {
+      key: 'build',
+      label: t('empty.starter.build'),
+      prompt: t('empty.starter.buildPrompt'),
+      icon: Hammer,
+      color: 'text-violet-500',
+    },
+    {
+      key: 'review',
+      label: t('empty.starter.review'),
+      prompt: t('empty.starter.reviewPrompt'),
+      icon: ScanSearch,
+      color: 'text-emerald-500',
+    },
+    {
+      key: 'fix',
+      label: t('empty.starter.fix'),
+      prompt: t('empty.starter.fixPrompt'),
+      icon: Bug,
+      color: 'text-orange-500',
+    },
+  ], [t])
+  const selectStarterPrompt = useCallback((prompt: string) => {
+    if (!activeTabId) return
+    queueComposerPrefill(activeTabId, { text: prompt })
+  }, [activeTabId, queueComposerPrefill])
   const messages = sessionState?.messages ?? []
   const streamingText = sessionState?.streamingText ?? ''
   const backgroundTasks = useMemo(
@@ -564,10 +599,10 @@ export function ActiveSession() {
               data-testid="empty-session-hero"
               className={[
                 'flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-8 pt-8',
-                compactEmptyHero ? 'pb-6' : 'pb-32',
+                compactEmptyHero ? 'pb-6' : 'pb-8',
               ].join(' ')}
             >
-              <div className="flex max-w-md flex-col items-center text-center">
+              <div className={`flex w-full flex-col items-center text-center ${compactEmptyHero ? 'max-w-md' : 'max-w-4xl'}`}>
                 {isMemberSession ? (
                   <>
                     <span className={`material-symbols-outlined mb-4 text-[var(--color-text-tertiary)] ${compactEmptyHero ? 'text-[36px]' : 'text-[48px]'}`}>smart_toy</span>
@@ -582,14 +617,34 @@ export function ActiveSession() {
                     <img
                       src={publicAssetPath('app-icon.png')}
                       alt="Claude Code Haha"
-                      className={compactEmptyHero ? 'mb-4 h-16 w-16' : 'mb-6 h-24 w-24'}
+                      className={compactEmptyHero ? 'mb-4 h-16 w-16' : 'mb-5 h-12 w-12'}
                     />
-                    <h1 className={`${compactEmptyHero ? 'mb-1 text-2xl' : 'mb-2 text-3xl'} font-extrabold tracking-tight text-[var(--color-text-primary)]`} style={{ fontFamily: 'var(--font-headline)' }}>
+                    <h1 className={`${compactEmptyHero ? 'mb-1 text-2xl' : 'mb-2 text-[30px]'} font-extrabold tracking-tight text-[var(--color-text-primary)]`} style={{ fontFamily: 'var(--font-headline)' }}>
                       {t('empty.title')}
                     </h1>
                     <p className={`mx-auto max-w-xs text-[var(--color-text-secondary)] ${compactEmptyHero ? 'text-sm' : ''}`} style={{ fontFamily: 'var(--font-body)' }}>
                       {t('empty.subtitle')}
                     </p>
+                    {!compactEmptyHero && !isMobileLayout && (
+                      <div className="mt-8 grid w-full grid-cols-4 gap-3" data-testid="active-session-starters">
+                        {starterPrompts.map((starter) => {
+                          const StarterIcon = starter.icon
+                          return (
+                            <button
+                              key={starter.key}
+                              type="button"
+                              onClick={() => selectStarterPrompt(starter.prompt)}
+                              className="group flex min-h-[108px] flex-col items-start justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-left shadow-[0_1px_2px_rgba(0,0,0,0.03)] transition-[background-color,border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-[var(--color-border-focus)] hover:bg-[var(--color-surface-container-lowest)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:shadow-[var(--shadow-focus-ring)]"
+                            >
+                              <StarterIcon className={`h-[18px] w-[18px] ${starter.color}`} strokeWidth={1.9} aria-hidden="true" />
+                              <span className="text-[13px] font-semibold leading-5 text-[var(--color-text-primary)]">
+                                {starter.label}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </>
                 )}
               </div>

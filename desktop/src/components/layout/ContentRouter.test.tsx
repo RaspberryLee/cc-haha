@@ -59,13 +59,13 @@ vi.mock('../workbench/WorkbenchTab', () => ({
 }))
 
 import { ContentRouter } from './ContentRouter'
-import { MARKET_TAB_ID, useTabStore } from '../../stores/tabStore'
+import { MARKET_TAB_ID, SETTINGS_TAB_ID, useTabStore } from '../../stores/tabStore'
 
 describe('ContentRouter tab surfaces', () => {
   afterEach(() => {
     cleanup()
     previewBridgeMock.close.mockClear()
-    useTabStore.setState({ tabs: [], activeTabId: null })
+    useTabStore.setState({ tabs: [], activeTabId: null, activeSurface: null })
   })
 
   it('renders the active terminal tab as main content', () => {
@@ -147,15 +147,11 @@ describe('ContentRouter tab surfaces', () => {
     expect(screen.queryByTestId('active-session')).not.toBeInTheDocument()
   })
 
-  it('renders the trace list tab without mounting the chat session surface', () => {
+  it('renders the trace list as an app surface without adding a work tab', () => {
     useTabStore.setState({
-      tabs: [{
-        sessionId: '__traces__',
-        title: 'Trace',
-        type: 'traces',
-        status: 'idle',
-      }],
-      activeTabId: '__traces__',
+      tabs: [{ sessionId: 'session-1', title: 'Chat', type: 'session', status: 'idle' }],
+      activeTabId: 'session-1',
+      activeSurface: 'traces',
     })
 
     render(<ContentRouter />)
@@ -200,21 +196,19 @@ describe('ContentRouter tab surfaces', () => {
     expect(screen.queryByTestId('subagent-run-page')).not.toBeInTheDocument()
   })
 
-  it('renders the market tab without mounting the chat session surface', () => {
+  it('renders the market as an app surface while preserving the active work tab', () => {
     useTabStore.setState({
-      tabs: [{
-        sessionId: MARKET_TAB_ID,
-        title: 'Market',
-        type: 'market',
-        status: 'idle',
-      }],
-      activeTabId: MARKET_TAB_ID,
+      tabs: [{ sessionId: 'session-1', title: 'Chat', type: 'session', status: 'idle' }],
+      activeTabId: 'session-1',
+      activeSurface: 'market',
     })
 
     render(<ContentRouter />)
 
     expect(screen.getByTestId('market-page')).toBeInTheDocument()
     expect(screen.queryByTestId('active-session')).not.toBeInTheDocument()
+    expect(useTabStore.getState().activeTabId).toBe('session-1')
+    expect(useTabStore.getState().tabs.some((tab) => tab.sessionId === MARKET_TAB_ID)).toBe(false)
   })
 
   it('renders workbench tabs as main content instead of mounting the chat session surface', () => {
@@ -237,11 +231,9 @@ describe('ContentRouter tab surfaces', () => {
 
   it('closes the native preview when switching from a chat session to settings', async () => {
     useTabStore.setState({
-      tabs: [
-        { sessionId: 'session-1', title: 'Chat', type: 'session', status: 'idle' },
-        { sessionId: '__settings__', title: 'Settings', type: 'settings', status: 'idle' },
-      ],
+      tabs: [{ sessionId: 'session-1', title: 'Chat', type: 'session', status: 'idle' }],
       activeTabId: 'session-1',
+      activeSurface: null,
     })
 
     render(<ContentRouter />)
@@ -249,7 +241,7 @@ describe('ContentRouter tab surfaces', () => {
     previewBridgeMock.close.mockClear()
 
     act(() => {
-      useTabStore.setState({ activeTabId: '__settings__' })
+      useTabStore.getState().openTab(SETTINGS_TAB_ID, 'Settings', 'settings')
     })
 
     expect(screen.getByTestId('settings-page')).toBeInTheDocument()

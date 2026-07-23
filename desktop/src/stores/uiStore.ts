@@ -3,6 +3,7 @@ import { isThemeMode, THEME_MODES, type ThemeMode } from '../types/settings'
 
 const THEME_STORAGE_KEY = 'cc-haha-theme'
 const ACTIVE_SETTINGS_TAB_STORAGE_KEY = 'cc-haha-active-settings-tab'
+const ACTIVE_CAPABILITY_SECTION_STORAGE_KEY = 'cc-haha-active-capability-section'
 
 const SETTINGS_TABS = [
   'providers',
@@ -59,6 +60,16 @@ export type Toast = {
   duration?: number
 }
 
+export type CapabilitySection = 'plugins' | 'skills' | 'agents'
+
+function getStoredCapabilitySection(): CapabilitySection {
+  try {
+    const stored = localStorage.getItem(ACTIVE_CAPABILITY_SECTION_STORAGE_KEY)
+    if (stored === 'plugins' || stored === 'skills' || stored === 'agents') return stored
+  } catch { /* localStorage unavailable */ }
+  return 'skills'
+}
+
 export type SettingsTab =
   | 'providers'
   | 'activity'
@@ -83,6 +94,7 @@ type UIStore = {
   sidebarOpen: boolean
   activeView: ActiveView
   activeSettingsTab: SettingsTab
+  activeCapabilitySection: CapabilitySection
   pendingSettingsTab: SettingsTab | null
   pendingMemoryPath: string | null
   activeModal: string | null
@@ -94,6 +106,7 @@ type UIStore = {
   setSidebarOpen: (open: boolean) => void
   setActiveView: (view: ActiveView) => void
   setActiveSettingsTab: (tab: SettingsTab) => void
+  setActiveCapabilitySection: (section: CapabilitySection) => void
   setPendingSettingsTab: (tab: SettingsTab | null) => void
   setPendingMemoryPath: (path: string | null) => void
   openModal: (id: string) => void
@@ -109,6 +122,7 @@ export const useUIStore = create<UIStore>((set) => ({
   sidebarOpen: true,
   activeView: 'code',
   activeSettingsTab: getStoredSettingsTab(),
+  activeCapabilitySection: getStoredCapabilitySection(),
   pendingSettingsTab: null,
   pendingMemoryPath: null,
   activeModal: null,
@@ -136,6 +150,10 @@ export const useUIStore = create<UIStore>((set) => ({
   setActiveSettingsTab: (tab) => {
     try { localStorage.setItem(ACTIVE_SETTINGS_TAB_STORAGE_KEY, tab) } catch { /* noop */ }
     set({ activeSettingsTab: tab })
+  },
+  setActiveCapabilitySection: (section) => {
+    try { localStorage.setItem(ACTIVE_CAPABILITY_SECTION_STORAGE_KEY, section) } catch { /* noop */ }
+    set({ activeCapabilitySection: section })
   },
   setPendingSettingsTab: (tab) => set({ pendingSettingsTab: tab }),
   setPendingMemoryPath: (path) => set({ pendingMemoryPath: path }),
